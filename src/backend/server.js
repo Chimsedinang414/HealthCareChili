@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Connect to MongoDB (placeholder)
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcaretree', {
@@ -27,6 +28,10 @@ app.get('/api/sensors', (req, res) => {
   // Placeholder for sensor data
   res.json({ sensors: [] });
 });
+
+// Image recognition routes
+const imageRouter = require('./routers/image.router');
+app.use('/api/image', imageRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
