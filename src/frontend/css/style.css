@@ -79,6 +79,195 @@ body {
   color: #16a34a;
 }
 
+/* ===== SENSOR DASHBOARD ===== */
+.sensor-dashboard {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  margin: 20px 0;
+}
+
+.sensor-dashboard h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.sensor-card {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: 0.3s;
+}
+
+.sensor-card:hover {
+  transform: translateY(-3px);
+}
+
+.sensor-card.normal {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+}
+
+.sensor-card.warning {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.sensor-card.error {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+}
+
+.sensor-card.unknown {
+  border-color: #d1d5db;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+}
+
+.sensor-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.sensor-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.sensor-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 5px 0;
+}
+
+.sensor-status {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.sensor-status.normal {
+  background: #22c55e;
+  color: white;
+}
+
+.sensor-status.warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.sensor-status.error {
+  background: #ef4444;
+  color: white;
+}
+
+.sensor-status.unknown {
+  background: #9ca3af;
+  color: white;
+}
+
+/* ===== CONNECTION STATUS ===== */
+.status-indicator {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border-radius: 20px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+  background: #22c55e;
+}
+
+.status-dot.offline {
+  background: #ef4444;
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ===== ALERTS ===== */
+.alerts-section {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  margin: 20px 0;
+}
+
+.alerts-section h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #1f2937;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.alert-warning {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-info {
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+
+.alert-icon {
+  font-size: 20px;
+}
+
+.alert-message {
+  flex: 1;
+  color: #1f2937;
+}
+
+.alert-value {
+  font-weight: bold;
+  color: #6b7280;
+}
+
 /* ===== PLANT CARD ===== */
 .plants {
   display: flex;

@@ -2,44 +2,120 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Garden</title>
+  <title>HealthCareTree - Smart Garden</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css/style.css">
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Style bổ sung cho khu vực Camera để giao diện gọn gàng hơn */
+    .camera-section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .camera-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .btn-cam {
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      font-weight: bold;
+    }
+    .btn-cam:hover {
+      background: #e0e0e0;
+    }
+    .btn-stop {
+      background: #ffebee;
+      color: #c62828;
+      border-color: #ffcdd2;
+    }
+    .btn-stop:hover {
+      background: #ffcdd2;
+    }
+    .camera-display {
+      background: #e9ecef;
+      border-radius: 8px;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #cam-feed {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="logo">🌱</div>
     <div>
-      <h1>Hệ thống tưới cây thông minh</h1>
-      <p>Giám sát và điều khiển IoT</p>
+      <h1>HealthCareTree</h1>
+      <p>Hệ thống giám sát cây trồng IoT</p>
+    </div>
+    <div class="status-indicator" id="connection-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Connecting...</span>
     </div>
   </div>
 
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat">🌿 1<br><span>Tổng cây</span></div>
-    <div class="stat">⚡ 1<br><span>Thiết bị hoạt động</span></div>
-    <div class="stat">💧 5L<br><span>Nước hôm nay</span></div>
-    <div class="stat green">📶 Online<br><span>Trạng thái</span></div>
+  <div class="sensor-dashboard">
+    <h2>📊 Dữ liệu cảm biến</h2>
+    <div class="sensor-grid">
+      <div class="sensor-card" id="sensor-temp">
+        <div class="sensor-icon">🌡️</div>
+        <div class="sensor-value"><span id="temperature">--</span>°C</div>
+        <div class="sensor-label">Nhiệt độ</div>
+        <div class="sensor-status" id="temp-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-humidity">
+        <div class="sensor-icon">💧</div>
+        <div class="sensor-value"><span id="humidity">--</span>%</div>
+        <div class="sensor-label">Độ ẩm không khí</div>
+        <div class="sensor-status" id="humidity-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-soil">
+        <div class="sensor-icon">🌱</div>
+        <div class="sensor-value"><span id="soil-moisture">--</span>%</div>
+        <div class="sensor-label">Độ ẩm đất</div>
+        <div class="sensor-status" id="soil-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-light">
+        <div class="sensor-icon">☀️</div>
+        <div class="sensor-value"><span id="light-level">--</span>%</div>
+        <div class="sensor-label">Ánh sáng</div>
+        <div class="sensor-status" id="light-status">--</div>
+      </div>
+    </div>
   </div>
 
-  <!-- PLANT -->
+  <div class="alerts-section" id="alerts-section" style="display: none;">
+    <h2>⚠️ Cảnh báo</h2>
+    <div class="alerts-list" id="alerts-list"></div>
+  </div>
+
   <div class="plants">
     <div class="plant">
+      <h2>🌵 Cây ớt</h2>
+      <p class="type">Trạng thái: Đang theo dõi</p>
 
-      <h2>🌵 Cây xương rồng</h2>
-      <p class="type">Cactus</p>
-
-      <!-- ĐỘ ẨM -->
       <div class="row">
         <div class="icon">💧</div>
         <div>
@@ -48,52 +124,82 @@
         </div>
       </div>
 
-      <!-- NHIỆT ĐỘ + ÁNH SÁNG -->
       <div class="info">
         <div>🌡 <span id="temp-1">--°C</span></div>
         <div>☀ <span id="light-1">--%</span></div>
       </div>
 
-      <!-- SLIDER -->
-      <input type="range" id="slider-1" min="0" max="100" value="0"
-             oninput="updateMoisture(1,this.value)">
-
-      <!-- BUTTON -->
+      <input type="range" id="slider-1" min="0" max="100" value="0" oninput="updateMoisture(1,this.value)">
       <button onclick="waterNow(1)">💧 Tưới ngay</button>
-
     </div>
   </div>
 
-  <!-- BOTTOM -->
-  <div class="bottom">
+  <div class="camera-section">
+    <h2>📷 ESP32-CAM: Giám sát trực tiếp</h2>
+    <div class="camera-controls">
+      <button class="btn-cam" onclick="viewCamera('image')">🖼️ Xem ảnh mới nhất</button>
+      <button class="btn-cam" onclick="viewCamera('stream')">🎥 Video trực tiếp</button>
+      <button class="btn-cam btn-stop" onclick="viewCamera('stop')">⏹️ Tắt Camera</button>
+    </div>
+    <div class="camera-display">
+      <span id="cam-status">Hãy chọn chế độ xem để kết nối với ESP32-CAM</span>
+      <img id="cam-feed" src="" alt="Tín hiệu từ Camera" style="display: none;">
+    </div>
+  </div>
 
-    <!-- CHART -->
+  <div class="bottom">
     <div class="chart-box">
       <h2>Biểu đồ độ ẩm realtime</h2>
       <canvas id="chart"></canvas>
     </div>
 
-    <!-- SCHEDULE -->
     <div class="schedule">
       <h2>Lịch tưới</h2>
-
       <div class="item">
-        🌵 Cây xương rồng
+        🌵 Cây ớt
         <label class="switch">
           <input type="checkbox" checked>
           <span></span>
         </label>
       </div>
-
     </div>
-
   </div>
 
 </div>
 
-<script src="index.js"></script>
-<script src="api.js"></script>
-<script src="chart.js"></script>
+<script src="js/api.js"></script>
+<script src="js/index.js"></script>
+<script src="js/chart.js"></script>
+
+<script>
+  function viewCamera(mode) {
+      const camFeed = document.getElementById('cam-feed');
+      const camStatus = document.getElementById('cam-status');
+      
+      // THAY ĐỔI IP DƯỚI ĐÂY THÀNH ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL CỦA BẠN
+      const esp32CamIp = "http://192.168.1.xxx"; 
+
+      if (mode === 'image') {
+          camStatus.style.display = 'none';
+          camFeed.style.display = 'block';
+          // Gọi endpoint chụp ảnh (thường là /capture hoặc /saved-photo trên Server Python)
+          // Thêm tham số thời gian (t) để ép trình duyệt tải lại ảnh mới, không dùng bộ nhớ đệm (cache)
+          camFeed.src = `${esp32CamIp}/capture?t=${new Date().getTime()}`;
+      } 
+      else if (mode === 'stream') {
+          camStatus.style.display = 'none';
+          camFeed.style.display = 'block';
+          // Endpoint stream video
+          camFeed.src = `${esp32CamIp}:81/stream`;
+      } 
+      else if (mode === 'stop') {
+          camFeed.style.display = 'none';
+          camFeed.src = ""; 
+          camStatus.style.display = 'block';
+          camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
+      }
+  }
+</script>
 
 </body>
 </html>
