@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthCareTree - Smart Garden</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="./css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">🌱</div>
+    <div>
+      <h1>HealthCareTree</h1>
+      <p>Hệ thống giám sát cây trồng IoT</p>
+    </div>
+    <div class="status-indicator" id="connection-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="sensor-dashboard">
+    <h2>📊 Dữ liệu cảm biến</h2>
+    <div class="sensor-grid">
+      <div class="sensor-card" id="sensor-temp">
+        <div class="sensor-icon">🌡️</div>
+        <div class="sensor-value"><span id="temperature">--</span>°C</div>
+        <div class="sensor-label">Nhiệt độ</div>
+        <div class="sensor-status" id="temp-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-humidity">
+        <div class="sensor-icon">💧</div>
+        <div class="sensor-value"><span id="humidity">--</span>%</div>
+        <div class="sensor-label">Độ ẩm không khí</div>
+        <div class="sensor-status" id="humidity-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-soil">
+        <div class="sensor-icon">🌱</div>
+        <div class="sensor-value"><span id="soil-moisture">--</span>%</div>
+        <div class="sensor-label">Độ ẩm đất</div>
+        <div class="sensor-status" id="soil-status">--</div>
+      </div>
+      <div class="sensor-card" id="sensor-light">
+        <div class="sensor-icon">☀️</div>
+        <div class="sensor-value"><span id="light-level">--</span>%</div>
+        <div class="sensor-label">Ánh sáng</div>
+        <div class="sensor-status" id="light-status">--</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alerts-section" id="alerts-section" style="display: none;">
+    <h2>⚠️ Cảnh báo</h2>
+    <div class="alerts-list" id="alerts-list"></div>
+  </div>
+
+  <div class="plants">
+    <div class="plant">
+      <h2 style="text-align: center; margin-bottom: 10px;">🌵 Cây ớt</h2>
+      <p class="type">Trạng thái: Đang theo dõi</p>
+
+      <div class="row">
+        <div class="icon">💧</div>
+        <div>
+          <p>Độ ẩm đất</p>
+          <p id="moisture-text-1" class="moisture">--%</p>
+        </div>
+      </div>
+
+      <div class="info">
+        <div>🌡 <span id="temp-1">--°C</span></div>
+        <div>☀ <span id="light-1">--%</span></div>
+      </div>
+
+      <input type="range" id="slider-1" min="0" max="100" value="0" oninput="updateMoisture(1,this.value)">
+      <button onclick="waterNow(1)">💧 Tưới ngay</button>
+    </div>
+  </div>
+
+  <div class="camera-section">
+    <h2 style="height: 50px">📷 ESP32-CAM: Giám sát trực tiếp</h2>
+    <div class="camera-controls">
+      <button class="btn-cam" onclick="viewCamera('image')">🖼️ Xem ảnh mới nhất</button>
+      <button class="btn-cam" onclick="viewCamera('stream')">🎥 Video trực tiếp</button>
+      <button class="btn-cam btn-stop" onclick="viewCamera('stop')">⏹️ Tắt Camera</button>
+    </div>
+    <div class="camera-display">
+      <span id="cam-status">Hãy chọn chế độ xem để kết nối với ESP32-CAM</span>
+      <img id="cam-feed" src="" alt="Tín hiệu từ Camera" style="display: none;">
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="chart-box">
+      <h2>Biểu đồ độ ẩm realtime</h2>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="schedule">
+      <h2>Lịch tưới</h2>
+      <div class="item">
+        🌵 Cây ớt
+        <label class="switch">
+          <input type="checkbox" checked>
+          <span></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/index.js"></script>
+<script src="js/chart.js"></script>
+
+<script src="./js/index.js"></script>
+
+</body>
+</html>

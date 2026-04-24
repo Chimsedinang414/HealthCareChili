@@ -1,0 +1,90 @@
+# ========================
+# OS & Editor
+# ========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========================
+# ENV / Secrets
+# ========================
+.env
+.env.*
+*.key
+*.pem
+config.json
+
+# ========================
+# Logs
+# ========================
+*.log
+
+# ========================
+# Python (AI / Backend)
+# ========================
+__pycache__/
+*.pyc
+venv/
+.venv/
+.env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ========================
+# NodeJS (Web)
+# ========================
+node_modules/
+dist/
+build/
+
+# ========================
+# AI Model & Data (QUAN TRỌNG)
+# ========================
+data/
+datasets/
+model_AI/dataset/
+*.h5
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.csv
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+plant_health_model.h5
+
+# ========================
+# Upload / runtime files
+# ========================
+uploads/
+temp/
+
+# ========================
+# Firmware (ESP32/Arduino)
+# ========================
+*.bin
+*.elf
+*.map
+.build/
+
+# ========================
+# Database
+# ========================
+*.db
+*.sqlite3
+
+// C++
+build/
+*.o
+*.exe
+*.pro.user
