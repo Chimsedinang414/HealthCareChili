@@ -136,7 +136,7 @@ model_AI/dataset/peppers/
 
 ## 🔌 Sơ đồ lắp mạch ESP32
 
-![ESP32 Diagram](docs/sodomach.png)
+![ESP32 Diagram](tomatoleaf/sodomach.png)
 
 ### 1. ESP32-CAM System
 

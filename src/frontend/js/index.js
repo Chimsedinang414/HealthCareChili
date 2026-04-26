@@ -1,4 +1,5 @@
-const IP = "http://10.10.58.87";
+// const IP = "http://10.10.58.87";
+const IP = "http://192.168.1.6";
 
 async function getSensorData() {
   try {
@@ -110,7 +111,8 @@ function viewCamera(mode) {
   const camStatus = document.getElementById('cam-status');
       
   // THAY ĐỔI IP DƯỚI ĐÂY THÀNH ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL CỦA BẠN
-  const esp32CamIp = "http://192.168.1.xxx"; 
+  // const esp32CamIp = "http://10.10.58.240"; 
+   const esp32CamIp = "http://192.168.1.22"; 
 
   if (mode === 'image') {
       camStatus.style.display = 'none';

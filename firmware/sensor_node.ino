@@ -239,7 +239,6 @@ void handleServerResponse(String response)
     }
 }
 
-// ==================== HÀM ĐIỀU KHIỂN ====================
 
 // Bật máy bơm
 void pumpOn()

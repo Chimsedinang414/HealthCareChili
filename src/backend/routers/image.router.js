@@ -25,8 +25,26 @@ const upload = multer({
 });
 
 // Routes cho nhận diện bệnh cây
-router.post('/predict', upload.single('image'), imageController.predictDisease);
+router.post(
+  '/predict',
+  express.raw({ type: 'image/jpeg', limit: '10mb' }),
+  imageController.predictDisease
+);
 router.get('/status', imageController.getModelStatus);
-router.post('/init-model', imageController.initializeModel);
+
+// Routes lấy dữ liệu lịch sử
+router.get('/history', imageController.getPredictionHistory);
+router.get('/latest', imageController.getLatestPrediction);
+router.get('/statistics', imageController.getStatistics);
+
+// Routes capture on-demand
+router.post('/capture-now', imageController.sendCaptureCommand);     // Web → Server
+router.get('/check-capture', imageController.checkCaptureCommand);   // ESP32 → Server
+router.delete('/clear-capture', imageController.clearCaptureCommand); // ESP32 → Server
+
+// Routes stream management
+router.post('/stream-start', imageController.startStream);           // Web → Server
+router.delete('/stream-stop', imageController.stopStream);           // Web → Server
+router.get('/stream-status', imageController.getStreamStatus);       // ESP32 → Server
 
 module.exports = router;
