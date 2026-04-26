@@ -1,30 +1,49 @@
-const IP = "http://10.10.58.87";
+const IP = "http://192.168.10.10";
+// const IP = "https://2514f12b-b0b5-4d1c-840e-41ae0567ff6e.mock.pstmn.io";
 
 async function getSensorData() {
   try {
-    const [humidityRes, tempRes, soilRes] = await Promise.all([
+    const [humidityRes, tempRes, soilRes, lightRes, thresholdLowRes, thresholdHighRes, pumpStateRes] = await Promise.all([
       fetch(`${IP}/get_air_humidity`),
-      fetch( `${IP}/get_temperature`),
-      fetch(`${IP}/get_soil_moisture`)
+      fetch(`${IP}/get_temperature`),
+      fetch(`${IP}/get_soil_moisture`),
+      fetch(`${IP}/get_light`),
+      fetch(`${IP}/get_Threshold_Low_Default`),
+      fetch(`${IP}/get_Threshold_High_Default`),
+      fetch(`${IP}/get_Pump_State`)
     ]);
-    
+
     const humidity = await humidityRes.text();
     const temperature = await tempRes.text();
     const soil = await soilRes.text();
-    
-    console.log("load data", humidity, temperature, soil);
+    const light = await lightRes.text();
+    const threshold_low = await thresholdLowRes.text();
+    const threshold_high = await thresholdHighRes.text();
+    const pump_state = await pumpStateRes.text();
 
-    updateUI({ humidity, temperature, soil });
+    data = {
+      humidity: humidity,
+      temperature: temperature,
+      soil: soil,
+      light: light,
+      threshold_low: threshold_low,
+      threshold_high: threshold_high,
+      pump_state: pump_state
+    };
+
+    console.log("load data", data);
+
+    updateUI(data);
     updateChart(soil);
-    
+
     setTimeout(getSensorData, 1000);
-    
+
     return {
       humidity: parseInt(humidity),
       temperature: parseInt(temperature),
       soil: parseInt(soil)
     };
-    
+
   } catch (err) {
     return null;
   }
@@ -48,17 +67,34 @@ const chart = new Chart(document.getElementById("chart"), {
 // ===== UPDATE UI =====
 function updateUI(data) {
   if (!data) return;
+  // console.log(data);
 
   // độ ẩm đất
-  updateMoisture(1, data.soil);
+  // updateMoisture(1, data.soil);
+  document.getElementById("moisture-1").innerText =
+    data.soil + "%";
 
   // nhiệt độ
   document.getElementById("temp-1").innerText =
     data.temperature + "°C";
 
+  // độ khói
+  document.getElementById("humidity-1").innerText =
+    data.humidity + "%";
+
   // ánh sáng (tạm dùng humidity giả lập)
   document.getElementById("light-1").innerText =
-    data.humidity + "%";
+    data.light + "%";
+
+  // ThreshHold
+  document.getElementById("threshhold-low").value =
+    data.threshold_low;
+  document.getElementById("threshhold-high").value =
+    data.threshold_high;
+  // PUMP
+  document.getElementById("pump-state").innerText =
+    data.pump_state;
+
 }
 
 // ===== UPDATE CHART =====
@@ -76,6 +112,47 @@ function updateChart(value) {
 
   chart.update();
 }
+
+//ThreshHold change
+function threshHoldLowChange() {
+  let value = document.getElementById("threshhold-low").value;
+  console.log("New threshold low:", value);
+
+  fetch(`${IP}/set_Threshold_Low_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+
+function threshHoldHighChange() {
+  let value = document.getElementById("threshhold-high").value;
+  console.log("New threshold high:", value);
+
+  fetch(`${IP}/set_Threshold_High_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
 
 // MOISTURE
 function updateMoisture(id, value) {
