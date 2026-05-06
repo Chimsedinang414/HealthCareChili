@@ -1,31 +1,31 @@
-// const IP = "http://10.10.58.87";
-const IP = "http://192.168.1.6";
+const IP = "http://10.10.58.198";
+// const IP = "http://192.168.1.10";// ip sensor
 
 async function getSensorData() {
   try {
     const [humidityRes, tempRes, soilRes] = await Promise.all([
       fetch(`${IP}/get_air_humidity`),
-      fetch( `${IP}/get_temperature`),
+      fetch(`${IP}/get_temperature`),
       fetch(`${IP}/get_soil_moisture`)
     ]);
-    
+
     const humidity = await humidityRes.text();
     const temperature = await tempRes.text();
     const soil = await soilRes.text();
-    
+
     console.log("load data", humidity, temperature, soil);
 
     updateUI({ humidity, temperature, soil });
     updateChart(soil);
-    
+
     setTimeout(getSensorData, 1000);
-    
+
     return {
       humidity: parseInt(humidity),
       temperature: parseInt(temperature),
       soil: parseInt(soil)
     };
-    
+
   } catch (err) {
     return null;
   }
@@ -106,31 +106,48 @@ function waterNow(id) {
   updateMoisture(id, newValue);
 }
 
-function viewCamera(mode) {
+async function viewCamera(mode) {
   const camFeed = document.getElementById('cam-feed');
   const camStatus = document.getElementById('cam-status');
-      
-  // THAY ĐỔI IP DƯỚI ĐÂY THÀNH ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL CỦA BẠN
-  // const esp32CamIp = "http://10.10.58.240"; 
-   const esp32CamIp = "http://192.168.1.22"; 
+
+  // ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL (Lấy từ Serial Monitor)
+  // const esp32CamIp = "http://192.168.1.17";
+  const esp32CamIp = "http://10.10.58.207";
+
+  window.currentCameraMode = mode;
 
   if (mode === 'image') {
-      camStatus.style.display = 'none';
-      camFeed.style.display = 'block';
-      // Gọi endpoint chụp ảnh (thường là /capture hoặc /saved-photo trên Server Python)
-      // Thêm tham số thời gian (t) để ép trình duyệt tải lại ảnh mới, không dùng bộ nhớ đệm (cache)
-      camFeed.src = `${esp32CamIp}/capture?t=${new Date().getTime()}`;
-  } 
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đang gửi lệnh chụp ảnh tới ESP32-CAM...';
+    camFeed.style.display = 'none';
+    camFeed.src = '';
+
+    // Dừng stream nếu có và gửi lệnh chụp
+    if (typeof stopStream === 'function') await stopStream();
+    if (typeof sendCaptureCommand === 'function') await sendCaptureCommand();
+  }
   else if (mode === 'stream') {
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đang khởi động Stream (Vui lòng đợi 3-5 giây)...';
+    camFeed.style.display = 'none';
+    camFeed.src = '';
+
+    // Gọi API báo cho backend bật stream
+    if (typeof startStream === 'function') await startStream();
+
+    // Đợi 5 giây để ESP32-CAM kịp nhận lệnh và khởi động WebServer
+    setTimeout(() => {
+      if (window.currentCameraMode !== 'stream') return;
       camStatus.style.display = 'none';
       camFeed.style.display = 'block';
-      // Endpoint stream video
       camFeed.src = `${esp32CamIp}:81/stream`;
-  } 
+    }, 5000);
+  }
   else if (mode === 'stop') {
-      camFeed.style.display = 'none';
-      camFeed.src = ""; 
-      camStatus.style.display = 'block';
-      camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
+    if (typeof stopStream === 'function') await stopStream();
+    camFeed.style.display = 'none';
+    camFeed.src = "";
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
   }
 }

@@ -1,147 +1,132 @@
 #!/usr/bin/env python3
 """
-Script xử lý nhận diện bệnh cây sử dụng YOLO
-Nhận path ảnh và trả về kết quả JSON
+Script nhận diện bệnh ớt sử dụng YOLO (best.pt)
+Nhận path ảnh, trả về JSON kết quả + ảnh annotated base64
 """
 
 import sys
 import json
 import time
+import base64
 from pathlib import Path
 import cv2
 import numpy as np
 from ultralytics import YOLO
 
-# Đường dẫn model
-MODEL_PATH = Path(__file__).parent.parent / 'plant_health_model.pt'
+# ─── Đường dẫn model ───────────────────────────────────────────────────────────
+# Ưu tiên best.pt (model đã train), fallback về plant_health_model.pt
+_ROOT = Path(__file__).parent.parent
+MODEL_PATH = _ROOT / 'best.pt'
+if not MODEL_PATH.exists():
+    MODEL_PATH = _ROOT / 'plant_health_model.pt'
 
-# Mapping nhãn
+# ─── Mapping nhãn (phải đúng thứ tự class lúc train) ─────────────────────────
 LABELS = {
-    0: 'bacterial_spot',
-    1: 'healthy',
-    2: 'leaf_curl_virus'
+    0: 'chili_wilted',
+    1: 'chili_whitefly',
+    2: 'chili_yellowish',
+    3: 'chili_leaf_curl_virus',
+    4: 'chili_veino_mottle_virus',
+    5: 'health_chili'
 }
+
+HEALTHY_CLASS = 5   # index của class khỏe mạnh
+
 
 class PlantDiseaseDetector:
     def __init__(self, model_path):
-        """Khởi tạo model YOLO"""
         try:
             if model_path.exists():
                 self.model = YOLO(str(model_path))
-                print(f"✓ Loaded YOLO model from {model_path}", file=sys.stderr)
+                print(f"✓ Loaded model: {model_path.name}", file=sys.stderr)
             else:
-                # Fallback: sử dụng mô hình pretrained
-                print(f"⚠ Model not found at {model_path}, using pretrained YOLO11n", file=sys.stderr)
-                self.model = YOLO('yolo11n.pt')
+                print(f"✗ Không tìm thấy model tại {model_path}", file=sys.stderr)
+                self.model = None
         except Exception as e:
-            print(f"✗ Error loading model: {e}", file=sys.stderr)
+            print(f"✗ Lỗi load model: {e}", file=sys.stderr)
             self.model = None
 
     def predict(self, image_path):
-        """Dự đoán bệnh cây từ ảnh"""
         start_time = time.time()
-        
+
         try:
-            # Đọc ảnh
             img = cv2.imread(image_path)
             if img is None:
-                raise ValueError(f"Cannot read image: {image_path}")
+                raise ValueError(f"Không đọc được ảnh: {image_path}")
 
-            # Chạy inference
-            results = self.model(image_path, verbose=False, conf=0.5)
-            
-            # Xử lý kết quả
-            result = results[0]
-            
-            # Lấy confidence scores từ detections
+            # ─── Inference ───────────────────────────────────────────────────
+            results = self.model(image_path, verbose=False, conf=0.25)
+            result  = results[0]
+
+            # ─── Vẽ bounding box + encode ảnh annotated ───────────────────
+            annotated = result.plot()   # numpy array BGR
+            _, buf = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            image_base64 = base64.b64encode(buf).decode('utf-8')
+
+            # ─── Xử lý kết quả detection ─────────────────────────────────
             if len(result.boxes) > 0:
-                # Nếu có detection
                 confidences = result.boxes.conf.cpu().numpy()
-                classes = result.boxes.cls.cpu().numpy().astype(int)
-                
-                # Tính average confidence cho từng class
-                class_confidences = {}
+                classes     = result.boxes.cls.cpu().numpy().astype(int)
+
+                # Gom confidence theo class
+                class_conf = {}
                 for conf, cls in zip(confidences, classes):
-                    if cls not in class_confidences:
-                        class_confidences[cls] = []
-                    class_confidences[cls].append(float(conf))
-                
-                # Tính trung bình
-                predictions = []
-                max_conf = 0
-                predicted_class = 1  # default: healthy
-                
+                    class_conf.setdefault(cls, []).append(float(conf))
+
+                predictions  = []
+                max_conf     = 0.0
+                pred_class   = HEALTHY_CLASS
+
                 for cls in range(len(LABELS)):
-                    if cls in class_confidences:
-                        avg_conf = np.mean(class_confidences[cls])
-                    else:
-                        avg_conf = 0.0
-                    
-                    predictions.append({
-                        'label': LABELS[cls],
-                        'confidence': float(avg_conf)
-                    })
-                    
-                    if avg_conf > max_conf:
-                        max_conf = avg_conf
-                        predicted_class = cls
+                    avg = float(np.mean(class_conf[cls])) if cls in class_conf else 0.0
+                    predictions.append({'label': LABELS[cls], 'confidence': avg})
+                    if avg > max_conf:
+                        max_conf   = avg
+                        pred_class = cls
             else:
-                # Không phát hiện - cây khỏe mạnh
-                predicted_class = 1  # healthy
-                max_conf = 0.95
-                predictions = [
-                    {'label': 'bacterial_spot', 'confidence': 0.02},
-                    {'label': 'healthy', 'confidence': 0.95},
-                    {'label': 'leaf_curl_virus', 'confidence': 0.03}
+                # Không phát hiện bất thường → cây khỏe mạnh
+                pred_class   = HEALTHY_CLASS
+                max_conf     = 0.95
+                predictions  = [
+                    {'label': LABELS[i], 'confidence': 0.95 if i == HEALTHY_CLASS else 0.01}
+                    for i in range(len(LABELS))
                 ]
 
             processing_time = int((time.time() - start_time) * 1000)
 
             return {
-                'success': True,
-                'disease': LABELS[predicted_class],
-                'confidence': float(max_conf),
-                'predictions': predictions,
+                'success':        True,
+                'disease':        LABELS[pred_class],
+                'confidence':     float(max_conf),
+                'predictions':    predictions,
                 'processingTime': processing_time,
-                'imageSize': len(open(image_path, 'rb').read())
+                'image_base64':   image_base64,
+                'imageSize':      Path(image_path).stat().st_size
             }
 
         except Exception as e:
-            processing_time = int((time.time() - start_time) * 1000)
             return {
-                'success': False,
-                'error': str(e),
-                'processingTime': processing_time
+                'success':        False,
+                'error':          str(e),
+                'processingTime': int((time.time() - start_time) * 1000)
             }
 
+
 def main():
-    """Main function"""
     if len(sys.argv) < 2:
-        result = {
-            'success': False,
-            'error': 'Usage: python predict_yolo.py <image_path>'
-        }
-        print(json.dumps(result))
+        print(json.dumps({'success': False, 'error': 'Usage: python predict_yolo.py <image_path>'}))
         sys.exit(1)
 
     image_path = sys.argv[1]
-
-    # Khởi tạo detector
-    detector = PlantDiseaseDetector(MODEL_PATH)
+    detector   = PlantDiseaseDetector(MODEL_PATH)
 
     if detector.model is None:
-        result = {
-            'success': False,
-            'error': 'Failed to load YOLO model'
-        }
-        print(json.dumps(result))
+        print(json.dumps({'success': False, 'error': f'Không load được model từ {MODEL_PATH}'}))
         sys.exit(1)
 
-    # Dự đoán
     result = detector.predict(image_path)
-
-    # Output kết quả dưới dạng JSON
     print(json.dumps(result))
+
 
 if __name__ == '__main__':
     main()

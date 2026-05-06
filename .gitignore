@@ -1,6 +1,9 @@
 # ========================
+
 # OS & Editor
+
 # ========================
+
 .DS_Store
 Thumbs.db
 .vscode/
@@ -10,24 +13,35 @@ Thumbs.db
 *~
 
 # ========================
-# ENV / Secrets
+
+# ENV / Secrets 
+
 # ========================
+
 .env
 .env.*
 *.key
 *.pem
 config.json
 
-# ========================
-# Logs
-# ========================
-*.log
+# ESP32 / Firmware secrets
+
+firmware/config.h
 
 # ========================
-# Python (AI / Backend)
+
+# Logs
+
 # ========================
-__pycache__/
+
+*.log
+
+
+
+**pycache**/
 *.pyc
+*.pyo
+*.pyd
 venv/
 .venv/
 .env/
@@ -37,60 +51,90 @@ venv/
 .coverage
 htmlcov/
 
-# ========================
-# NodeJS (Web)
-# ========================
+
+
 node_modules/
 dist/
 build/
+.env.local
+.env.development
+.env.production
 
 # ========================
-# AI Model & Data (QUAN TRỌNG)
+
+# AI Model & Dataset 
+
 # ========================
+
 data/
 datasets/
 model_AI/dataset/
+
+# Model files
+
 *.h5
 *.pt
 *.pth
 *.onnx
 *.tflite
+
+# Dataset formats
+
 *.csv
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-plant_health_model.h5
 
 # ========================
-# Ignore all .md files except README.md
-#
-*.md
-!README.md
+
+# Runtime files (ảnh từ ESP32)
 
 # ========================
-# Upload / runtime files
-# ========================
+
 uploads/
 temp/
+images/
 
 # ========================
-# Firmware (ESP32/Arduino)
+
+# Database
+
 # ========================
+
+*.db
+*.sqlite3
+
+# ========================
+
+# Firmware build (ESP32/Arduino)
+
+# ========================
+
 *.bin
 *.elf
 *.map
 .build/
 
 # ========================
-# Database
-# ========================
-*.db
-*.sqlite3
 
-// C++
+# C/C++
+
+# ========================
+
 build/
 *.o
 *.exe
 *.pro.user
+
+
+
+
+!*.webp
+!*.png
+!*.jpg
+!*.jpeg
+!*.gif
+
+# Cho phép folder chứa ảnh hiển thị
+
+!tomatoleaf/
+!tomatoleaf/*
+!src/frontend/images/
+!src/frontend/images/*

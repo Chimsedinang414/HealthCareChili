@@ -4,7 +4,7 @@ const predictionSchema = new mongoose.Schema({
   // Thông tin dự đoán
   disease: {
     type: String,
-    enum: ['bacterial_spot', 'healthy', 'leaf_curl_virus', 'unknown'],
+    enum: ['chili_wilted', 'chili_whitefly', 'chili_yellowish', 'chili_leaf_curl_virus', 'chili_veino_mottle_virus', 'health_chili', 'unknown'],
     required: true
   },
   

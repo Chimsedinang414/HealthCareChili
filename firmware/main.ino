@@ -90,7 +90,7 @@ bool checkStreamMode() {
     return false;
 
   HTTPClient http;
-  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/stream-status";
+  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/image/stream/status";
 
   http.begin(url);
   http.setTimeout(3000);
@@ -118,7 +118,7 @@ bool uploadImage(camera_fb_t *fb) {
 
   HTTPClient http;
 
-  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + String(SERVER_PATH);
+  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + String(SERVER_PATH) + "?deviceId=ESP32-CAM-01";
 
   http.begin(url);
   http.setTimeout(UPLOAD_TIMEOUT);
@@ -138,7 +138,7 @@ bool checkForCaptureCommand() {
 
   HTTPClient http;
 
-  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/image/check-capture";
+  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/image/capture/check?deviceId=ESP32-CAM-01";
 
   http.begin(url);
   http.setTimeout(5000);
@@ -160,7 +160,7 @@ bool checkForCaptureCommand() {
 void clearCaptureCommand() {
   HTTPClient http;
 
-  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/image/clear-capture";
+  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + "/api/image/capture/clear?deviceId=ESP32-CAM-01";
 
   http.begin(url);
   http.setTimeout(5000);

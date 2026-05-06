@@ -6,34 +6,56 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use('/uploads', express.static('uploads'));
+// ─── Static files ─────────────────────────────────────────────────────────────
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors());
-app.use(express.json());
+
+//  Raw body parser cho ESP32-CAM upload ảnh
+// Router /api/image/upload đã có raw parser riêng, nhưng thêm ở đây để chắc chắn
+app.use((req, res, next) => {
+  if (
+    req.path === '/api/image/upload' &&
+    req.method === 'POST' &&
+    req.headers['content-type'] &&
+    req.headers['content-type'].startsWith('image/')
+  ) {
+    express.raw({ type: 'image/*', limit: '5mb' })(req, res, next);
+  } else {
+    next();
+  }
+});
+
+// ─── JSON & URL-encoded
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Connect to MongoDB (placeholder)
+// ─── Database ─────────────────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcaretree', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => console.log('✓ Connected to MongoDB'))
+.catch(err => console.error('✗ MongoDB connection error:', err));
 
-// Basic routes
+// ─── Routes ───────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ message: 'HealthCareTree Backend API' });
+  res.json({ message: 'HealthCareTree Backend API', version: '1.0' });
 });
 
-app.get('/api/sensors', (req, res) => {
-  // Placeholder for sensor data
-  res.json({ sensors: [] });
-});
+// Image (ESP32-CAM + nhận diện bệnh)
+app.use('/api/image', require('./routers/image.router'));
 
-// Image recognition routes
-const imageRouter = require('./routers/image.router');
-app.use('/api/image', imageRouter);
+// Sensor (ESP8266 DHT22 + soil + light)
+try {
+  app.use('/api/sensors', require('./routers/sensor.router'));
+} catch (e) {
+  console.warn('sensor.router chưa implement, bỏ qua.');
+}
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// ─── Start ────────────────────────────────────────────────────────────────────
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✓ Server running on port ${PORT}`);
 });

@@ -107,7 +107,6 @@ void loop()
     delay(100);
 }
 
-// ==================== HÀM ĐỌC CẢM BIẾN ====================
 
 // Đọc nhiệt độ và độ ẩm không khí
 void readDHT()
@@ -260,6 +259,8 @@ bool getPumpStatus()
     return digitalRead(RELAY_PIN) == HIGH;
 }
 
-// Logic tự động
-if (soilMoisture < 30 %)
-→ Bật máy bơm if (soilMoisture > 80 %)   → Tắt máy bơm if (temperature > 35°C)     → Cảnh báo nhiệt độ cao if (humidity < 40 %)        → Khuyến nghị phun sương
+// Logic tự động (tham khảo - implement trong loop nếu cần):
+// if (soilMoisture < 30) pumpOn();   // Đất quá khô → tưới
+// if (soilMoisture > 80) pumpOff();  // Đủ ẩm → dừng tưới
+// if (temperature > 35) { /* Cảnh báo nhiệt độ cao */ }
+// if (humidity < 40)    { /* Khuyến nghị phun sương */ }

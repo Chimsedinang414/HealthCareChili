@@ -3,20 +3,27 @@ const fs = require('fs');
 const path = require('path');
 const Prediction = require('../models/prediction.model');
 
+// Create uploads/images directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '../uploads/images');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 class ImageProcessingService {
   constructor() {
     this.model = null;
-    this.labels = ['bacterial_spot', 'healthy', 'leaf_curl_virus'];
+    this.labels = ['chili_wilted', 'chili_whitefly', 'chili_yellowish', 'chili_leaf_curl_virus', 'chili_veino_mottle_virus', 'health_chili'];
     this.isModelLoaded = false;
-    
+
+    // ==================== LATEST RESULT CACHE ====================
+    // Cache ảnh + kết quả nhận diện mới nhất theo deviceId
+    // Cấu trúc: { 'ESP32-CAM-01': { image_base64, predictions, disease, confidence, ... } }
+    this.latestResults = {};
+
     // ==================== CAPTURE COMMAND MANAGEMENT ====================
-    // Lưu lệnh chụp cho từng device
-    // Cấu trúc: { 'ESP32-CAM-01': { commandId, timestamp, reason, executed } }
     this.captureCommands = {};
-    
+
     // ==================== STREAM MANAGEMENT ====================
-    // Lưu trạng thái stream cho từng device
-    // Cấu trúc: { 'ESP32-CAM-01': { isStreaming, startedAt, streamUrl } }
     this.streamStatus = {};
   }
 
@@ -25,7 +32,7 @@ class ImageProcessingService {
     return new Promise((resolve, reject) => {
       // Tạo file tạm thời
       const tempImagePath = path.join(__dirname, `../../temp_${Date.now()}.jpg`);
-      
+
       fs.writeFileSync(tempImagePath, imageBuffer);
 
       // Gọi Python script để xử lý với YOLO
@@ -47,27 +54,52 @@ class ImageProcessingService {
 
       python.on('close', async (code) => {
         // Xóa file tạm
-        fs.unlinkSync(tempImagePath);
+        try { fs.unlinkSync(tempImagePath); } catch (_) { }
 
         if (code === 0) {
           try {
             const result = JSON.parse(output);
-            
+
+            const isHealthy = result.disease === 'health_chili';
+            const alertFlag = !isHealthy && result.confidence > 0.6;
+            const alertMsg = isHealthy
+              ? 'Cây ớt khỏe mạnh ✓'
+              : `⚠️ Phát hiện: ${result.disease} (${(result.confidence * 100).toFixed(1)}%)`;
+
+            // Lưu ảnh vào local folder
+            const fileName = `img_${Date.now()}.jpg`;
+            const savePath = path.join(uploadsDir, fileName);
+            const imageToSave = result.image_base64 ? Buffer.from(result.image_base64, 'base64') : imageBuffer;
+            fs.writeFileSync(savePath, imageToSave);
+            const imageUrl = `/uploads/images/${fileName}`;
+
             // Lưu vào database
             const prediction = new Prediction({
               disease: result.disease,
               confidence: result.confidence,
               predictions: result.predictions,
               deviceId: deviceId,
-              alert: result.disease !== 'healthy' && result.confidence > 0.6,
-              alertMessage: result.disease !== 'healthy' 
-                ? `⚠️ Phát hiện: ${result.disease} (${(result.confidence * 100).toFixed(1)}%)`
-                : 'Cây khỏe mạnh ✓',
+              alert: alertFlag,
+              alertMessage: alertMsg,
               status: 'success',
-              processingTime: result.processingTime
+              processingTime: result.processingTime,
+              imageUrl: imageUrl
             });
 
             const saved = await prediction.save();
+
+            // Cache kết quả + ảnh annotated (có bbox) cho frontend polling
+            this.latestResults[deviceId] = {
+              image_base64: result.image_base64 || imageBuffer.toString('base64'),
+              predictions: result.predictions,
+              disease: result.disease,
+              confidence: result.confidence,
+              count: result.predictions ? result.predictions.length : 0,
+              alert: alertFlag,
+              alertMessage: alertMsg,
+              timestamp: saved.timestamp || new Date()
+            };
+
             resolve({
               success: true,
               prediction: saved.toObject(),
@@ -92,7 +124,7 @@ class ImageProcessingService {
         .sort({ timestamp: -1 })
         .limit(limit)
         .exec();
-      
+
       return {
         success: true,
         total: predictions.length,
@@ -109,7 +141,7 @@ class ImageProcessingService {
       const prediction = await Prediction.findOne({ deviceId })
         .sort({ timestamp: -1 })
         .exec();
-      
+
       return {
         success: true,
         prediction: prediction ? prediction.toObject() : null
@@ -180,10 +212,10 @@ class ImageProcessingService {
     const resized = tf.image.resizeBilinear(image, [224, 224]);
     const normalized = resized.div(255.0);
     const expanded = normalized.expandDims(0);
-    
+
     image.dispose();
     resized.dispose();
-    
+
     return expanded;
   }
 
@@ -196,13 +228,13 @@ class ImageProcessingService {
       const tensor = await this.preprocessImage(imageBuffer);
       const prediction = this.model.predict(tensor);
       const probabilities = await prediction.data();
-      
+
       tensor.dispose();
       prediction.dispose();
 
       let maxIndex = 0;
       let maxProbability = 0;
-      
+
       for (let i = 0; i < probabilities.length; i++) {
         if (probabilities[i] > maxProbability) {
           maxProbability = probabilities[i];
@@ -293,11 +325,23 @@ class ImageProcessingService {
   // Lấy trạng thái commands
   async getCommandStatus(deviceId = 'ESP32-CAM-01') {
     const command = this.captureCommands[deviceId];
-    
+
     return {
       hasPendingCommand: command && !command.executed ? true : false,
       command: command || null
     };
+  }
+
+  // ==================== LATEST RESULT CACHE ====================
+
+  // Lấy kết quả + ảnh annotated mới nhất (dùng cho frontend polling)
+  getLatestResult(deviceId = 'ESP32-CAM-01') {
+    return this.latestResults[deviceId] || null;
+  }
+
+  // Xóa cache (dùng khi cần reset)
+  clearLatestResult(deviceId = 'ESP32-CAM-01') {
+    delete this.latestResults[deviceId];
   }
 
   // Clear all commands (for maintenance)
@@ -311,7 +355,7 @@ class ImageProcessingService {
   // Bật stream
   async startStream(deviceId = 'ESP32-CAM-01') {
     const streamUrl = `http://${deviceId}:81/stream`;
-    
+
     this.streamStatus[deviceId] = {
       isStreaming: true,
       startedAt: new Date(),

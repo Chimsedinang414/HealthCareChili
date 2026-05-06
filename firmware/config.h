@@ -6,9 +6,9 @@
 #define WIFI_PASSWORD "23072004"
 
 // Server Configuration
-#define SERVER_HOST "192.168.209.100"
+#define SERVER_HOST "192.168.1.14"
 #define SERVER_PORT 3000
-#define SERVER_PATH "/api/image/predict"
+#define SERVER_PATH "/api/image/upload"
 
 // Camera Configuration
 #define CAMERA_MODEL_AI_THINKER
