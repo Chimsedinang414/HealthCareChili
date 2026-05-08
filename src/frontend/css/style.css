@@ -223,8 +223,7 @@ button:hover {
   margin-top: 25px;
 }
 
-.chart-box,
-.schedule {
+.chart-box, .schedule {
   background: white;
   padding: 20px;
   border-radius: 18px;
