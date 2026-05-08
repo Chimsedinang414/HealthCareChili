@@ -66,6 +66,7 @@ const chart = new Chart(document.getElementById("chart"), {
 
 // ===== UPDATE UI =====
 function updateUI(data) {
+
   if (!data) return;
   // console.log(data);
 
@@ -94,6 +95,12 @@ function updateUI(data) {
   // PUMP
   document.getElementById("pump-state").innerText =
     data.pump_state;
+
+  if (data.pump_state.trim().toLowerCase() === "on") {
+    document.getElementById("water-status").innerText = "💧 Dừng tưới";
+  } else {
+    document.getElementById("water-status").innerText = "💧 Tưới ngay";
+  }
 
 }
 
@@ -173,11 +180,48 @@ function updateMoisture(id, value) {
   text.style.color = color;
 }
 
-function waterNow(id) {
-  let text = document.getElementById(`moisture-text-${id}`);
-  let num = parseInt(text.innerText);
+function waterNow() {
+  let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
 
-  let newValue = Math.min(num + 30, 100);
-
-  updateMoisture(id, newValue);
+  //nếu on -> off
+  if (currentState === "on") {
+    controlPump("OFF");
+    document.getElementById("water-status").innerText = "💧 Tưới ngay";
+  } else {
+    controlPump("ON");
+    document.getElementById("water-status").innerText = "💧 Dừng tưới";
+  }
 }
+
+function controlPump(state) {
+  fetch(`${IP}/control_pump?state=${encodeURIComponent(state)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/"
+    },
+    // body: "state=" + encodeURIComponent(state)
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log(data);
+  })
+  .catch(err => console.error("Error:", err));
+  
+  console.log("Pump state changed to:", state);
+}
+
+// function controlPump(state) {
+
+//   fetch(`${IP}/control_pump?state=${state}`)
+//     .then(res => res.text())
+//     .then(data => {
+
+//       console.log("Pump:", data);
+
+//       // cập nhật trạng thái lên UI
+//       document.getElementById("pump-state").innerText =
+//         state.toUpperCase();
+
+//     })
+//     .catch(err => console.error("Pump Error:", err));
+// }
