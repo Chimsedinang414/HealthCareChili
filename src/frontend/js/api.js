@@ -1,7 +1,7 @@
 //config
 
-const API_BASE_URL = 'http://10.10.58.198:3000/api';// ip máy tính
-// const API_BASE_URL = 'http://192.168.1.14:3000/api';
+// const API_BASE_URL = 'http://10.10.58.198:3000/api';// ip máy tính
+const API_BASE_URL = 'http://localhost:3000/api';
 
 const SENSOR_REFRESH_INTERVAL = 10000;  // 10 giây
 const FRAME_POLL_INTERVAL = 2000;   // 2 giây — polling ảnh mới từ ESP32
@@ -94,6 +94,8 @@ function updateConnectionStatus(connected) {
     el.querySelector('.status-dot').className = `status-dot ${connected ? 'online' : 'offline'}`;
     el.querySelector('.status-text').textContent = connected ? 'Online' : 'Offline';
 }
+
+
 
 // ==================== IMAGE API ====================
 

@@ -884,3 +884,46 @@ button:hover {
   flex-direction: column;
   gap: 4px;
 }
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.threshold-grid input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-top: 5px;
+}
+
+.chart-box {
+  width: 100%;
+}
+
+.schedule {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .info-grid,
+  .threshold-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sensor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .camera-controls {
+    flex-direction: column;
+  }
+}

@@ -6,7 +6,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# In-memory storage (thay thế bằng database khi cần)
+# In-memory storage
 sensor_data = {
     'temperature': 0,
     'humidity': 0,
@@ -26,7 +26,7 @@ THRESHOLDS = {
     'light_min': 20,           # Ánh sáng tối thiểu (%)
 }
 
-# Lịch sử dữ liệu (lưu 100 bản ghi gần nhất)
+# Lịch sử dữ lieeuj
 data_history = []
 
 @app.route('/')
