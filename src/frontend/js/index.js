@@ -1,4 +1,5 @@
-const IP = "http://192.168.10.10";
+// const IP = "http://192.168.10.10";
+const IP = "http://172.20.10.4";
 // const IP = "https://2514f12b-b0b5-4d1c-840e-41ae0567ff6e.mock.pstmn.io";
 
 async function getSensorData() {
@@ -185,28 +186,28 @@ function waterNow() {
 
   //nếu on -> off
   if (currentState === "on") {
-    controlPump("OFF");
+    controlPump("off");
     document.getElementById("water-status").innerText = "💧 Tưới ngay";
   } else {
-    controlPump("ON");
+    controlPump("on");
     document.getElementById("water-status").innerText = "💧 Dừng tưới";
   }
 }
 
 function controlPump(state) {
-  fetch(`${IP}/control_pump?state=${encodeURIComponent(state)}`, {
+  fetch(`${IP}/control_pump`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/"
+      "Content-Type": "application/x-www-form-urlencoded"
     },
-    // body: "state=" + encodeURIComponent(state)
+    body: "state=" + encodeURIComponent(state)
   })
-  .then(res => res.json())
-  .then(data => {
-    console.log(data);
-  })
-  .catch(err => console.error("Error:", err));
-  
+    .then(res => res.json())
+    .then(data => {
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+
   console.log("Pump state changed to:", state);
 }
 

@@ -1,6 +1,7 @@
 // API communication functions
 const API_BASE_URL = 'http://localhost:3000/api';
 
+
 async function fetchSensorData() {
     try {
         const response = await fetch(`${API_BASE_URL}/sensors`);
