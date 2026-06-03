@@ -52,11 +52,13 @@
           </div>
           <div>
             <p>Ngưỡng dưới</p>
-            <input id="threshhold-low" type="number" value="0" class="moisture" onchange="threshHoldLowChange()" style="width: 65px; margin-right: 5px;">%
+            <input id="threshhold-low" type="number" value="0" class="moisture" onchange="threshHoldLowChange()"
+              style="width: 65px; margin-right: 5px;">%
           </div>
           <div>
             <p>Ngưỡng trên</p>
-            <input id="threshhold-high" type="number" value="0" class="moisture" onchange="threshHoldHighChange()" style="width: 65px; margin-right: 5px;">%
+            <input id="threshhold-high" type="number" value="0" class="moisture" onchange="threshHoldHighChange()"
+              style="width: 65px; margin-right: 5px;">%
           </div>
           <div>
             <p>Trạng thái bơm</p>
@@ -87,82 +89,9 @@
       <canvas id="chart"></canvas>
     </div>
 
-
-  </div>
-
-  <script src="./js/index.js"></script>
-  <!-- <script src="./js/api.js"></script> -->
-  <script src="./js/chart.js"></script>
-
-    <div class="header">
-      <div class="logo">🌱</div>
-      <div>
-        <h1>HealthCareTree</h1>
-        <p>Hệ thống giám sát cây trồng IoT</p>
-      </div>
-      <div class="status-indicator" id="connection-status">
-        <span class="status-dot"></span>
-        <span class="status-text">Connecting...</span>
-      </div>
-    </div>
-
-    <div class="sensor-dashboard">
-      <h2>📊 Dữ liệu cảm biến</h2>
-      <div class="sensor-grid">
-        <div class="sensor-card" id="sensor-temp">
-          <div class="sensor-icon">🌡️</div>
-          <div class="sensor-value"><span id="temperature">--</span>°C</div>
-          <div class="sensor-label">Nhiệt độ</div>
-          <div class="sensor-status" id="temp-status">--</div>
-        </div>
-        <div class="sensor-card" id="sensor-humidity">
-          <div class="sensor-icon">💧</div>
-          <div class="sensor-value"><span id="humidity">--</span>%</div>
-          <div class="sensor-label">Độ ẩm không khí</div>
-          <div class="sensor-status" id="humidity-status">--</div>
-        </div>
-        <div class="sensor-card" id="sensor-soil">
-          <div class="sensor-icon">🌱</div>
-          <div class="sensor-value"><span id="soil-moisture">--</span>%</div>
-          <div class="sensor-label">Độ ẩm đất</div>
-          <div class="sensor-status" id="soil-status">--</div>
-        </div>
-        <div class="sensor-card" id="sensor-light">
-          <div class="sensor-icon">☀️</div>
-          <div class="sensor-value"><span id="light-level">--</span>%</div>
-          <div class="sensor-label">Ánh sáng</div>
-          <div class="sensor-status" id="light-status">--</div>
-        </div>
-      </div>
-    </div>
-
     <div class="alerts-section" id="alerts-section" style="display: none;">
       <h2>⚠️ Cảnh báo</h2>
       <div class="alerts-list" id="alerts-list"></div>
-    </div>
-
-    <div class="plants">
-      <div class="plant">
-        <h2 style="text-align: center; margin-bottom: 10px;"> Cây ớt</h2>
-
-        <p class="type">Trạng thái: Đang theo dõi</p>
-
-        <div class="row">
-          <div class="icon">💧</div>
-          <div>
-            <p>Độ ẩm đất</p>
-            <p id="moisture-text-1" class="moisture">--%</p>
-          </div>
-        </div>
-
-        <div class="info">
-          <div>🌡 <span id="temp-1">--°C</span></div>
-          <div>☀ <span id="light-1">--%</span></div>
-        </div>
-
-        <input type="range" id="slider-1" min="0" max="100" value="0" oninput="updateMoisture(1,this.value)">
-        <button onclick="waterNow(1)">💧 Tưới ngay</button>
-      </div>
     </div>
 
     <div class="camera-section">
