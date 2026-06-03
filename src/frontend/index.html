@@ -5,6 +5,11 @@
   <meta charset="UTF-8">
   <title>HealthCareTree - Smart Garden</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- <link rel="stylesheet" href="index.css"> -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Chart.js -->
   <link rel="stylesheet" href="./css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -14,6 +19,80 @@
 <body>
 
   <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo">🌱</div>
+      <div>
+        <h1>Hệ thống tưới cây thông minh</h1>
+        <p>Giám sát và điều khiển IoT</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat">🌿 1<br><span>Tổng cây</span></div>
+      <div class="stat">⚡ 1<br><span>Thiết bị hoạt động</span></div>
+      <div class="stat">💧 5L<br><span>Nước hôm nay</span></div>
+      <div class="stat green">📶 Online<br><span>Trạng thái</span></div>
+    </div>
+
+    <!-- PLANT -->
+    <div class="plants">
+      <div class="plant">
+
+        <h2>🌶️ cây ớt</h2>
+        <p class="type">chili</p>
+
+        <!-- ĐỘ ẨM ĐẤT-->
+        <div class="info">
+          <div>
+            <p>Độ ẩm đất 💧</p>
+            <p id="moisture-1" class="moisture">--%</p>
+          </div>
+          <div>
+            <p>Ngưỡng dưới</p>
+            <input id="threshhold-low" type="number" value="0" class="moisture" onchange="threshHoldLowChange()" style="width: 65px; margin-right: 5px;">%
+          </div>
+          <div>
+            <p>Ngưỡng trên</p>
+            <input id="threshhold-high" type="number" value="0" class="moisture" onchange="threshHoldHighChange()" style="width: 65px; margin-right: 5px;">%
+          </div>
+          <div>
+            <p>Trạng thái bơm</p>
+            <div id="pump-state" class="moisture">---</div>
+          </div>
+        </div>
+
+        <!-- NHIỆT ĐỘ + ĐỘ ẨM KHÔNG KHÍ + ÁNH SÁNG -->
+        <div class="info">
+          <div>🌡 <span id="temp-1">--°C</span></div>
+          <div>💧 <span id="humidity-1">--%</span></div>
+          <div>☀ <span id="light-1">--%</span></div>
+        </div>
+
+        <!-- SLIDER + THRESHOLD -->
+
+        <button id="water-status" onclick="waterNow()">💧 Tưới ngay</button>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <!-- <div class="bottom"> -->
+
+    <!-- CHART -->
+    <div class="chart-box">
+      <h2>Biểu đồ độ ẩm đất</h2>
+      <canvas id="chart"></canvas>
+    </div>
+
+
+  </div>
+
+  <script src="./js/index.js"></script>
+  <!-- <script src="./js/api.js"></script> -->
+  <script src="./js/chart.js"></script>
 
     <div class="header">
       <div class="logo">🌱</div>

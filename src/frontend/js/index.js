@@ -1,9 +1,10 @@
+// const IP = "http://192.168.10.10";
 const IP = "http://172.20.10.4";
-// const IP = "http://192.168.1.10";// ip sensor
+// const IP = "https://2514f12b-b0b5-4d1c-840e-41ae0567ff6e.mock.pstmn.io";
 
 async function getSensorData() {
   try {
-    const [humidityRes, tempRes, soilRes] = await Promise.all([
+    const [humidityRes, tempRes, soilRes, lightRes, thresholdLowRes, thresholdHighRes, pumpStateRes] = await Promise.all([
       fetch(`${IP}/get_air_humidity`),
       fetch(`${IP}/get_temperature`),
       fetch(`${IP}/get_soil_moisture`),
@@ -66,34 +67,42 @@ const chart = new Chart(document.getElementById("chart"), {
 
 // ===== UPDATE UI =====
 function updateUI(data) {
+
   if (!data) return;
+  // console.log(data);
 
   // độ ẩm đất
   // updateMoisture(1, data.soil);
-  document.getElementById("soil-1").innerText =
+  document.getElementById("moisture-1").innerText =
     data.soil + "%";
 
   // nhiệt độ
   document.getElementById("temp-1").innerText =
     data.temperature + "°C";
 
-  // ánh sáng (tạm dùng humidity giả lập)
-  document.getElementById("light-1").innerText =
+  // độ khói
+  document.getElementById("humidity-1").innerText =
     data.humidity + "%";
 
-  document.getElementById("threshold-low").innerText =
-    "Ngưỡng thấp: " + data.thresholdLow + "%";
-  document.getElementById("threshold-high").innerText =
-    "Ngưỡng cao: " + data.thresholdHigh + "%";
+  // ánh sáng (tạm dùng humidity giả lập)
+  document.getElementById("light-1").innerText =
+    data.light + "%";
 
+  // ThreshHold
+  document.getElementById("threshhold-low").value =
+    data.threshold_low;
+  document.getElementById("threshhold-high").value =
+    data.threshold_high;
+  // PUMP
   document.getElementById("pump-state").innerText =
-    "Bơm: " + data.pumpState;
+    data.pump_state;
 
-  if(data.pumpState.trim().toLowerCase() === "on") {
-    document.getElementById("pump-state").style.color = "green";
+  if (data.pump_state.trim().toLowerCase() === "on") {
+    document.getElementById("water-status").innerText = "💧 Dừng tưới";
   } else {
-    document.getElementById("pump-state").style.color = "red";
+    document.getElementById("water-status").innerText = "💧 Tưới ngay";
   }
+
 }
 
 // ===== UPDATE CHART =====
@@ -111,6 +120,47 @@ function updateChart(value) {
 
   chart.update();
 }
+
+//ThreshHold change
+function threshHoldLowChange() {
+  let value = document.getElementById("threshhold-low").value;
+  console.log("New threshold low:", value);
+
+  fetch(`${IP}/set_Threshold_Low_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+
+function threshHoldHighChange() {
+  let value = document.getElementById("threshhold-high").value;
+  console.log("New threshold high:", value);
+
+  fetch(`${IP}/set_Threshold_High_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
 
 // MOISTURE
 function updateMoisture(id, value) {
@@ -131,12 +181,51 @@ function updateMoisture(id, value) {
   text.style.color = color;
 }
 
-function waterNow(id) {
-  let text = document.getElementById(`moisture-text-${id}`);
-  let num = parseInt(text.innerText);
+function waterNow() {
+  let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
 
-  let newValue = Math.min(num + 30, 100);
+  //nếu on -> off
+  if (currentState === "on") {
+    controlPump("off");
+    // document.getElementById("water-status").innerText = "💧 Tưới ngay";
+  } else {
+    controlPump("on");
+    // document.getElementById("water-status").innerText = "💧 Dừng tưới";
+  }
+}
 
+function controlPump(state) {
+  fetch(`${IP}/control_pump`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "state=" + encodeURIComponent(state)
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+
+  console.log("Pump state changed to:", state);
+}
+
+// function controlPump(state) {
+
+//   fetch(`${IP}/control_pump?state=${state}`)
+//     .then(res => res.text())
+//     .then(data => {
+
+//       console.log("Pump:", data);
+
+//       // cập nhật trạng thái lên UI
+//       document.getElementById("pump-state").innerText =
+//         state.toUpperCase();
+
+//     })
+//     .catch(err => console.error("Pump Error:", err));
+// }
   updateMoisture(id, newValue);
 }
 function threshHoldLowChange() {

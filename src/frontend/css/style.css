@@ -283,7 +283,7 @@ body {
 }
 
 .plant {
-  width: 380px;
+  width: 100%;
   background: white;
   padding: 25px;
   border-radius: 20px;
@@ -321,8 +321,11 @@ body {
 
 /* ===== INFO ===== */
 .info {
-  display: flex;
-  justify-content: space-between;
+  /* display: flex;
+  justify-content: space-between; */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
   margin: 15px 0;
 }
 
@@ -345,6 +348,28 @@ body {
 
 .bad {
   color: #dc2626;
+}
+
+/* ===== MOISTURE INPUT ===== */
+input.moisture {
+  width: 60px;
+  padding: 4px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+/* Khi focus vào input */
+input.moisture:focus {
+  border-color: #4CAF50;
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
 
 /* ===== SLIDER ===== */
@@ -410,6 +435,7 @@ button:hover {
   padding: 20px;
   border-radius: 18px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
 }
 
 /* ===== SCHEDULE ===== */
