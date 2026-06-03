@@ -187,10 +187,10 @@ function waterNow() {
   //nếu on -> off
   if (currentState === "on") {
     controlPump("off");
-    document.getElementById("water-status").innerText = "💧 Tưới ngay";
+    // document.getElementById("water-status").innerText = "💧 Tưới ngay";
   } else {
     controlPump("on");
-    document.getElementById("water-status").innerText = "💧 Dừng tưới";
+    // document.getElementById("water-status").innerText = "💧 Dừng tưới";
   }
 }
 
