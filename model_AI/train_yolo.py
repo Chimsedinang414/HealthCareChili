@@ -3,7 +3,7 @@ import os
 
 # Cấu hình
 DATASET_PATH = r'D:\Project\HealthCareTree\model_AI\dataset\peppers'
-MODEL_NAME = 'yolo11n'  # YOLO11 nano (nhanh nhất)
+MODEL_NAME = 'yolo11n'  # YOLO11 nano
 EPOCHS = 30
 IMG_SIZE = 640
 BATCH_SIZE = 8
@@ -78,6 +78,7 @@ names:
     best_model_path = os.path.join(PROJECT_DIR, 'train', 'weights', 'best.pt')
     if os.path.exists(best_model_path):
         print(f"\nBest model saved at: {best_model_path}")
+        
         # Đổi tên thành plant_health_model.pt
         final_path = os.path.join(PROJECT_DIR, 'plant_health_model.pt')
         if os.path.exists(final_path):

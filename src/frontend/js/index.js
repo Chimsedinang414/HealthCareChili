@@ -18,20 +18,20 @@ async function getSensorData() {
     const temperature = await tempRes.text();
     const soil = await soilRes.text();
     const light = await lightRes.text();
-    const threshold_low = await thresholdLowRes.text();
-    const threshold_high = await thresholdHighRes.text();
-    const pump_state = await pumpStateRes.text();
+    const thresholdLow = await thresholdLowRes.text();
+    const thresholdHigh = await thresholdHighRes.text();
+    const pumpState = await pumpStateRes.text();
 
+  
     data = {
-      humidity: humidity,
-      temperature: temperature,
-      soil: soil,
-      light: light,
-      threshold_low: threshold_low,
-      threshold_high: threshold_high,
-      pump_state: pump_state
+      humidity: parseInt(humidity),
+      temperature: parseInt(temperature),
+      soil: parseInt(soil),
+      light: parseInt(light),
+      thresholdLow: parseInt(thresholdLow),
+      thresholdHigh: parseInt(thresholdHigh),
+      pumpState: pumpState
     };
-
     console.log("load data", data);
 
     updateUI(data);
@@ -226,3 +226,139 @@ function controlPump(state) {
 //     })
 //     .catch(err => console.error("Pump Error:", err));
 // }
+  updateMoisture(id, newValue);
+}
+function threshHoldLowChange() {
+  let value = document.getElementById("threshold-low-input").value;
+  console.log("New threshold low", value);
+
+   fetch(`${IP}/set_Threshold_Low_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+function threshHoldHighChange() {
+  let value = document.getElementById("threshhold-high").value;
+  console.log("New threshold high:", value);
+
+  fetch(`${IP}/set_Threshold_High_Default`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "value=" + encodeURIComponent(value)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Server response: " + JSON.stringify(data));
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+
+// MOISTURE
+function updateMoisture(id, value) {
+  let text = document.getElementById(`moisture-text-${id}`);
+
+  let status = "Tốt";
+  let color = "green";
+
+  if (value < 30) {
+    status = "Khô";
+    color = "red";
+  } else if (value < 60) {
+    status = "Cần tưới";
+    color = "orange";
+  }
+
+  text.innerText = value + "% - " + status;
+  text.style.color = color;
+}
+
+function waterNow() {
+  let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
+
+  //nếu on -> off
+  if (currentState === "on") {
+    controlPump("off");
+    document.getElementById("water-status").innerText = "💧 Tưới ngay";
+  } else {
+    controlPump("on");
+    document.getElementById("water-status").innerText = "💧 Dừng tưới";
+  }
+}
+
+function controlPump(state) {
+  fetch(`${IP}/control_pump`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "state=" + encodeURIComponent(state)
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log(data);
+    })
+    .catch(err => console.error("Error:", err));
+
+  console.log("Pump state changed to:", state);
+}
+
+
+async function viewCamera(mode) {
+  const camFeed = document.getElementById('cam-feed');
+  const camStatus = document.getElementById('cam-status');
+
+  // ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL 
+  const esp32CamIp = "http://192.168.1.19";
+  // const esp32CamIp = "http://10.10.58.207";
+
+  window.currentCameraMode = mode;
+
+  if (mode === 'image') {
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đang gửi lệnh chụp ảnh tới ESP32-CAM...';
+    camFeed.style.display = 'none';
+    camFeed.src = '';
+
+    // Dừng stream nếu có và gửi lệnh chụp
+    if (typeof stopStream === 'function') await stopStream();
+    if (typeof sendCaptureCommand === 'function') await sendCaptureCommand();
+  }
+  else if (mode === 'stream') {
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đang khởi động Stream (Vui lòng đợi 3-5 giây)...';
+    camFeed.style.display = 'none';
+    camFeed.src = '';
+
+    // Gọi API báo cho backend bật stream
+    if (typeof startStream === 'function') await startStream();
+
+    // Đợi 5 giây để ESP32-CAM kịp nhận lệnh và khởi động WebServer
+    setTimeout(() => {
+      if (window.currentCameraMode !== 'stream') return;
+      camStatus.style.display = 'none';
+      camFeed.style.display = 'block';
+      camFeed.src = `${esp32CamIp}:81/stream`;
+    }, 5000);
+  }
+  else if (mode === 'stop') {
+    if (typeof stopStream === 'function') await stopStream();
+    camFeed.style.display = 'none';
+    camFeed.src = "";
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
+  }
+}

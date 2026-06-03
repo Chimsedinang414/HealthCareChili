@@ -1,32 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const imageController = require('../controllers/image.controller');
-const multer = require('multer');
-const path = require('path');
 
-// Cấu hình multer để lưu tạm ảnh
-const storage = multer.memoryStorage();
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // Giới hạn 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-});
+const ctrl = require('../controllers/image.controller');
 
-// Routes cho nhận diện bệnh cây
-router.post('/predict', upload.single('image'), imageController.predictDisease);
-router.get('/status', imageController.getModelStatus);
-router.post('/init-model', imageController.initializeModel);
+// ─── ESP32-CAM gửi ảnh raw JPEG body ────────────────────────────────────────
+// Content-Type: image/jpeg, body = raw bytes
+router.post('/upload',
+  express.raw({ type: 'image/*', limit: '5mb' }),
+  ctrl.predictDisease
+);
+
+// ─── Frontend polling ────────────────────────────────────────────────────────
+// GET /api/image/latest-frame?deviceId=ESP32-CAM-01
+// Trả về { image_base64, predictions, disease, confidence, alert, ... }
+router.get('/latest-frame', ctrl.getLatestFrame);
+
+// ─── Lịch sử & thống kê ─────────────────────────────────────────────────────
+router.get('/history',    ctrl.getPredictionHistory);
+router.get('/latest',     ctrl.getLatestPrediction);
+router.get('/statistics', ctrl.getStatistics);
+router.get('/status',     ctrl.getModelStatus);
+
+// ─── Capture commands ────────────────────────────────────────────────────────
+// Web gửi lệnh chụp ngay
+router.post('/capture/send',  ctrl.sendCaptureCommand);
+// ESP32 hỏi có lệnh chụp không (polling ~1s)
+router.get('/capture/check',  ctrl.checkCaptureCommand);
+// ESP32 xóa lệnh sau khi chụp xong
+router.delete('/capture/clear', ctrl.clearCaptureCommand);
+
+// ─── Stream management ───────────────────────────────────────────────────────
+router.post('/stream/start',  ctrl.startStream);
+router.post('/stream/stop',   ctrl.stopStream);
+router.get('/stream/status',  ctrl.getStreamStatus);
 
 module.exports = router;

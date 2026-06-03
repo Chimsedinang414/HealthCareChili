@@ -39,7 +39,7 @@ while True:
     label = f"{display_name.get(class_names[index], class_names[index])}: {confidence:.2f}%"
     color = (0, 255, 0) if class_names[index] == 'healthy' else (0, 0, 255) # Xanh cho khỏe, Đỏ cho bệnh
     
-    cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+    cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)q
     cv2.imshow("Kiem tra suc khoe cay (AI Specialist Test)", frame)
 
     # Thoát nếu nhấn phím 'q' [cite: 1257]
