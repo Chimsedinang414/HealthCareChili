@@ -340,93 +340,93 @@ function controlPump(state) {
 // }
 //   updateMoisture(id, newValue);
 // }
-function threshHoldLowChange() {
-  let value = document.getElementById("threshold-low-input").value;
-  console.log("New threshold low", value);
+// function threshHoldLowChange() {
+//   let value = document.getElementById("threshold-low-input").value;
+//   console.log("New threshold low", value);
 
-   fetch(`${IP}/set_Threshold_Low_Default`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "value=" + encodeURIComponent(value)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert("Server response: " + JSON.stringify(data));
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
-}
+//    fetch(`${IP}/set_Threshold_Low_Default`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded"
+//     },
+//     body: "value=" + encodeURIComponent(value)
+//   })
+//     .then(res => res.json())
+//     .then(data => {
+//       alert("Server response: " + JSON.stringify(data));
+//       console.log(data);
+//     })
+//     .catch(err => console.error("Error:", err));
+// }
 
-function threshHoldHighChange() {
-  let value = document.getElementById("threshhold-high").value;
-  console.log("New threshold high:", value);
+// function threshHoldHighChange() {
+//   let value = document.getElementById("threshhold-high").value;
+//   console.log("New threshold high:", value);
 
-  fetch(`${IP}/set_Threshold_High_Default`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "value=" + encodeURIComponent(value)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert("Server response: " + JSON.stringify(data));
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
-}
+//   fetch(`${IP}/set_Threshold_High_Default`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded"
+//     },
+//     body: "value=" + encodeURIComponent(value)
+//   })
+//     .then(res => res.json())
+//     .then(data => {
+//       alert("Server response: " + JSON.stringify(data));
+//       console.log(data);
+//     })
+//     .catch(err => console.error("Error:", err));
+// }
 
 
 // MOISTURE
-function updateMoisture(id, value) {
-  let text = document.getElementById(`moisture-text-${id}`);
+// function updateMoisture(id, value) {
+//   let text = document.getElementById(`moisture-text-${id}`);
 
-  let status = "Tốt";
-  let color = "green";
+//   let status = "Tốt";
+//   let color = "green";
 
-  if (value < 30) {
-    status = "Khô";
-    color = "red";
-  } else if (value < 60) {
-    status = "Cần tưới";
-    color = "orange";
-  }
+//   if (value < 30) {
+//     status = "Khô";
+//     color = "red";
+//   } else if (value < 60) {
+//     status = "Cần tưới";
+//     color = "orange";
+//   }
 
-  text.innerText = value + "% - " + status;
-  text.style.color = color;
-}
+//   text.innerText = value + "% - " + status;
+//   text.style.color = color;
+// }
 
-function waterNow() {
-  let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
+// function waterNow() {
+//   let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
 
-  //nếu on -> off
-  if (currentState === "on") {
-    controlPump("off");
-    document.getElementById("water-status").innerText = "💧 Tưới ngay";
-  } else {
-    controlPump("on");
-    document.getElementById("water-status").innerText = "💧 Dừng tưới";
-  }
-}
+//   //nếu on -> off
+//   if (currentState === "on") {
+//     controlPump("off");
+//     document.getElementById("water-status").innerText = "💧 Tưới ngay";
+//   } else {
+//     controlPump("on");
+//     document.getElementById("water-status").innerText = "💧 Dừng tưới";
+//   }
+// }
 
-function controlPump(state) {
-  fetch(`${IP}/control_pump`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "state=" + encodeURIComponent(state)
-  })
-    .then(res => res.json())
-    .then(data => {
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
+// function controlPump(state) {
+//   fetch(`${IP}/control_pump`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded"
+//     },
+//     body: "state=" + encodeURIComponent(state)
+//   })
+//     .then(res => res.json())
+//     .then(data => {
+//       console.log(data);
+//     })
+//     .catch(err => console.error("Error:", err));
 
-  console.log("Pump state changed to:", state);
-}
+//   console.log("Pump state changed to:", state);
+// }
 
 
 async function viewCamera(mode) {
