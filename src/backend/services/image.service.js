@@ -11,9 +11,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 class ImageProcessingService {
   constructor() {
-    this.model = null;
     this.labels = ['chili_wilted', 'chili_whitefly', 'chili_yellowish', 'chili_leaf_curl_virus', 'chili_veino_mottle_virus', 'health_chili'];
-    this.isModelLoaded = false;
 
     // ==================== LATEST RESULT CACHE ====================
     // Cache ảnh + kết quả nhận diện mới nhất theo deviceId
@@ -25,6 +23,50 @@ class ImageProcessingService {
 
     // ==================== STREAM MANAGEMENT ====================
     this.streamStatus = {};
+
+    // ==================== DEVICE IP TRACKING ====================
+    this.deviceIps = {};
+  }
+
+  // Cập nhật IP của thiết bị
+  updateDeviceIp(deviceId, ip) {
+    if (!ip) return;
+    // Loại bỏ tiền tố IPv6 nếu có
+    const cleanIp = ip.startsWith('::ffff:') ? ip.substring(7) : ip;
+    if (cleanIp !== '::1' && cleanIp !== '127.0.0.1') {
+      this.deviceIps[deviceId] = cleanIp;
+      console.log(`[DEVICE] Updated IP for ${deviceId}: ${cleanIp}`);
+    }
+  }
+
+  // Lấy IP của thiết bị
+  getDeviceIp(deviceId) {
+    return this.deviceIps[deviceId] || null;
+  }
+
+  // Tìm đường dẫn Python từ môi trường ảo .venv hoặc venv
+  getPythonPath() {
+    const rootDir = path.join(__dirname, '../../..');
+    const winPaths = [
+      path.join(rootDir, '.venv/Scripts/python.exe'),
+      path.join(rootDir, 'venv/Scripts/python.exe')
+    ];
+    const unixPaths = [
+      path.join(rootDir, '.venv/bin/python'),
+      path.join(rootDir, 'venv/bin/python')
+    ];
+
+    const paths = process.platform === 'win32' ? winPaths : unixPaths;
+
+    for (const p of paths) {
+      if (fs.existsSync(p)) {
+        console.log(`[PYTHON] Using virtual environment python: ${p}`);
+        return p;
+      }
+    }
+
+    console.log(`[PYTHON] Virtual environment python not found, falling back to system 'python'`);
+    return 'python';
   }
 
   // Xử lý ảnh với YOLO Model (sử dụng Python backend)
@@ -35,8 +77,9 @@ class ImageProcessingService {
 
       fs.writeFileSync(tempImagePath, imageBuffer);
 
+      const pythonPath = this.getPythonPath();
       // Gọi Python script để xử lý với YOLO
-      const python = spawn('python', [
+      const python = spawn(pythonPath, [
         path.join(__dirname, '../../../scripts/predict_yolo.py'),
         tempImagePath
       ]);
@@ -58,13 +101,20 @@ class ImageProcessingService {
 
         if (code === 0) {
           try {
-            const result = JSON.parse(output);
+            // Trích xuất JSON từ output đề phòng các cảnh báo/logs khác từ Python
+            const jsonStart = output.indexOf('{');
+            const jsonEnd = output.lastIndexOf('}');
+            if (jsonStart === -1 || jsonEnd === -1) {
+              throw new Error(`Không tìm thấy kết quả JSON hợp lệ từ Python script. Output: ${output}`);
+            }
+            const jsonStr = output.substring(jsonStart, jsonEnd + 1);
+            const result = JSON.parse(jsonStr);
 
             const isHealthy = result.disease === 'health_chili';
             const alertFlag = !isHealthy && result.confidence > 0.6;
             const alertMsg = isHealthy
               ? 'Cây ớt khỏe mạnh ✓'
-              : `⚠️ Phát hiện: ${result.disease} (${(result.confidence * 100).toFixed(1)}%)`;
+              : ` Phát hiện: ${result.disease} (${(result.confidence * 100).toFixed(1)}%)`;
 
             // Lưu ảnh vào local folder
             const fileName = `img_${Date.now()}.jpg`;
@@ -193,74 +243,7 @@ class ImageProcessingService {
     }
   }
 
-  // Phương thức cũ (TensorFlow - nếu cần fallback)
-  async loadModel(modelPath) {
-    try {
-      console.log('Loading TensorFlow model...');
-      this.model = await tf.loadLayersModel(`file://${modelPath}`);
-      this.isModelLoaded = true;
-      console.log('TensorFlow model loaded successfully');
-      return true;
-    } catch (error) {
-      console.error('Error loading TensorFlow model:', error);
-      return false;
-    }
-  }
-
-  async preprocessImage(imageBuffer) {
-    const image = tf.node.decodeJpeg(imageBuffer, 3);
-    const resized = tf.image.resizeBilinear(image, [224, 224]);
-    const normalized = resized.div(255.0);
-    const expanded = normalized.expandDims(0);
-
-    image.dispose();
-    resized.dispose();
-
-    return expanded;
-  }
-
-  async predict(imageBuffer) {
-    if (!this.isModelLoaded) {
-      throw new Error('Model not loaded');
-    }
-
-    try {
-      const tensor = await this.preprocessImage(imageBuffer);
-      const prediction = this.model.predict(tensor);
-      const probabilities = await prediction.data();
-
-      tensor.dispose();
-      prediction.dispose();
-
-      let maxIndex = 0;
-      let maxProbability = 0;
-
-      for (let i = 0; i < probabilities.length; i++) {
-        if (probabilities[i] > maxProbability) {
-          maxProbability = probabilities[i];
-          maxIndex = i;
-        }
-      }
-
-      const results = this.labels.map((label, index) => ({
-        label,
-        confidence: probabilities[index]
-      }));
-
-      results.sort((a, b) => b.confidence - a.confidence);
-
-      return {
-        disease: this.labels[maxIndex],
-        confidence: maxProbability,
-        allPredictions: results
-      };
-    } catch (error) {
-      console.error('Prediction error:', error);
-      throw error;
-    }
-  }
-
-  // ==================== CAPTURE COMMAND METHODS ====================
+  // CAPTURE COMMAND METHODS
 
   // Gửi lệnh chụp ngay từ web
   async sendCaptureCommand(deviceId = 'ESP32-CAM-01') {
@@ -332,37 +315,39 @@ class ImageProcessingService {
     };
   }
 
-  // ==================== LATEST RESULT CACHE ====================
+  //LATEST RESULT CACHE 
 
   // Lấy kết quả + ảnh annotated mới nhất (dùng cho frontend polling)
   getLatestResult(deviceId = 'ESP32-CAM-01') {
     return this.latestResults[deviceId] || null;
   }
 
-  // Xóa cache (dùng khi cần reset)
+  // Xóa cache 
   clearLatestResult(deviceId = 'ESP32-CAM-01') {
     delete this.latestResults[deviceId];
   }
 
-  // Clear all commands (for maintenance)
+  // Clear all commands 
   async clearAllCommands() {
     this.captureCommands = {};
     console.log('[CAPTURE] All commands cleared');
   }
 
-  // ==================== STREAM MANAGEMENT ====================
+  // STREAM MANAGEMENT 
 
   // Bật stream
   async startStream(deviceId = 'ESP32-CAM-01') {
-    const streamUrl = `http://${deviceId}:81/stream`;
+    const ip = this.getDeviceIp(deviceId) || deviceId;
+    const streamUrl = `http://${ip}:81/stream`;
 
     this.streamStatus[deviceId] = {
       isStreaming: true,
+      commandPending: true,
       startedAt: new Date(),
       streamUrl: streamUrl
     };
 
-    console.log(`[STREAM] Stream started for ${deviceId}`);
+    console.log(`[STREAM] Stream started for ${deviceId} at URL: ${streamUrl}`);
 
     return {
       success: true,
@@ -386,10 +371,24 @@ class ImageProcessingService {
   async getStreamStatus(deviceId = 'ESP32-CAM-01') {
     const status = this.streamStatus[deviceId];
 
+    if (!status) {
+      return {
+        isStreaming: false,
+        command: false
+      };
+    }
+
+    const shouldStart = status.commandPending;
+    status.commandPending = false;
+
+    // Cập nhật lại streamUrl nếu IP của device đổi
+    const ip = this.getDeviceIp(deviceId) || deviceId;
+    status.streamUrl = `http://${ip}:81/stream`;
+
     return {
-      isStreaming: status ? true : false,
-      status: status || null,
-      startedAt: status ? status.startedAt : null
+      isStreaming: status.isStreaming,
+      command: shouldStart,
+      status
     };
   }
 

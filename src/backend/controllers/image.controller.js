@@ -13,13 +13,17 @@ exports.predictDisease = async (req, res) => {
     const imageBuffer = req.body;
     const deviceId = req.query.deviceId || 'ESP32-CAM-01';
 
+    // Cập nhật IP thiết bị
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    imageService.updateDeviceIp(deviceId, clientIp);
+
     console.log(`[${new Date().toISOString()}] Image from ${deviceId} (${imageBuffer.length} bytes)`);
 
     const result = await imageService.predictWithYolo(imageBuffer, deviceId);
 
     const processingTime = Date.now() - startTime;
 
-    // Trả kết quả nhỏ gọn cho ESP32 (không cần image_base64)
+    // Trả kết quả nhỏ gọn cho ESP32 
     return res.json({
       success: true,
       disease: result.disease,
@@ -126,6 +130,11 @@ exports.sendCaptureCommand = async (req, res) => {
 exports.checkCaptureCommand = async (req, res) => {
   try {
     const deviceId = req.query.deviceId || 'ESP32-CAM-01';
+    
+    // Cập nhật IP thiết bị
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    imageService.updateDeviceIp(deviceId, clientIp);
+
     const result = await imageService.checkCaptureCommand(deviceId);
     return res.json({ success: true, ...result });
   } catch (error) {
@@ -145,35 +154,134 @@ exports.clearCaptureCommand = async (req, res) => {
   }
 };
 
-// ─── STREAM MANAGEMENT ──────────────────────────────────────────────────────
+// ─── STREAM MAN
 
-// Web → bật stream
-exports.startStream = async (req, res) => {
-  try {
-    const deviceId = req.query.deviceId || 'ESP32-CAM-01';
-    const result = await imageService.startStream(deviceId);
-    console.log(`🎥 Stream started for ${deviceId}`);
-    return res.json({ success: true, message: `Stream started`, ...result });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+// Web -> bật stream
+exports.startStream =
+async (req,res)=>{
+
+try{
+
+ const deviceId =
+ req.query.deviceId ||
+ "ESP32-CAM-01";
+
+ const status =
+ await imageService
+ .getStreamStatus(
+ deviceId
+ );
+
+ if(status.isStreaming){
+
+   return res.json({
+
+     success:true,
+
+     message:
+     "already streaming"
+
+   });
+
+ }
+
+ const result =
+ await imageService
+ .startStream(
+ deviceId
+ );
+
+ console.log(
+ `STREAM ON ${deviceId}`
+ );
+
+ return res.json({
+
+ success:true,
+
+ ...result
+
+ });
+
+}catch(error){
+
+ return res.status(500)
+ .json({
+
+ success:false,
+
+ error:error.message
+
+ });
+
+}
+
+}
 
 // Web → tắt stream
-exports.stopStream = async (req, res) => {
-  try {
-    const deviceId = req.query.deviceId || 'ESP32-CAM-01';
-    await imageService.stopStream(deviceId);
-    return res.json({ success: true, message: `Stream stopped` });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+exports.stopStream =
+async (req,res)=>{
 
-// ESP32 → check stream có bật không
+try{
+
+ const deviceId =
+ req.query.deviceId ||
+ "ESP32-CAM-01";
+
+ const status =
+ await imageService
+ .getStreamStatus(
+ deviceId
+ );
+
+ if(!status.isStreaming){
+
+   return res.json({
+
+     success:true,
+
+     message:
+     "already stopped"
+
+   });
+
+ }
+
+ await imageService
+ .stopStream(
+ deviceId
+ );
+
+ return res.json({
+
+ success:true
+
+ });
+
+}catch(error){
+
+ return res.status(500)
+ .json({
+
+ success:false,
+
+ error:error.message
+
+ });
+
+}
+
+}
+
+// ESP32 / check stream có bật không
 exports.getStreamStatus = async (req, res) => {
   try {
     const deviceId = req.query.deviceId || 'ESP32-CAM-01';
+    
+    // Cập nhật IP thiết bị
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    imageService.updateDeviceIp(deviceId, clientIp);
+
     const result = await imageService.getStreamStatus(deviceId);
     return res.json({
       success: true,

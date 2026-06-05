@@ -408,25 +408,31 @@ async function turnOnLightAutoMode() {
 //     camFeed.style.display = 'none';
 //     camFeed.src = '';
 
-//     // Gọi API báo cho backend bật stream
-//     if (typeof startStream === 'function') await startStream();
+    // Gọi API báo cho backend bật stream
+    let streamUrl = `${esp32CamIp}:81/stream`; // fallback mặc định
+    if (typeof startStream === 'function') {
+      const result = await startStream();
+      if (result && result.success && result.streamUrl) {
+        streamUrl = result.streamUrl;
+      }
+    }
 
-//     // Đợi 5 giây để ESP32-CAM kịp nhận lệnh và khởi động WebServer
-//     setTimeout(() => {
-//       if (window.currentCameraMode !== 'stream') return;
-//       camStatus.style.display = 'none';
-//       camFeed.style.display = 'block';
-//       camFeed.src = `${esp32CamIp}:81/stream`;
-//     }, 5000);
-//   }
-//   else if (mode === 'stop') {
-//     if (typeof stopStream === 'function') await stopStream();
-//     camFeed.style.display = 'none';
-//     camFeed.src = "";
-//     camStatus.style.display = 'block';
-//     camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
-//   }
-// }
+    // Đợi 5 giây để ESP32-CAM kịp nhận lệnh và khởi động WebServer
+    setTimeout(() => {
+      if (window.currentCameraMode !== 'stream') return;
+      camStatus.style.display = 'none';
+      camFeed.style.display = 'block';
+      camFeed.src = streamUrl;
+    }, 5000);
+  }
+  else if (mode === 'stop') {
+    if (typeof stopStream === 'function') await stopStream();
+    camFeed.style.display = 'none';
+    camFeed.src = "";
+    camStatus.style.display = 'block';
+    camStatus.innerText = 'Đã tắt Camera. Hệ thống chuyển về chế độ chờ.';
+  }
+}
 
 
 // const chart = new Chart(

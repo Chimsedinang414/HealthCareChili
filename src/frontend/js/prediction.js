@@ -118,7 +118,7 @@ async function checkForNewAlerts() {
 // Check cảnh báo mỗi 30 giây
 setInterval(checkForNewAlerts, 30000);
 
-// ==================== DISEASE HELPERS ====================
+// Helpers
 
 function getDiseaseColorClass(disease) {
     return {

@@ -1,4 +1,7 @@
 //config
+const API_BASE_URL = window.location.origin.startsWith('http')
+    ? window.location.origin + '/api'
+    : 'http://localhost:3000/api';
 
 const API_BASE_URL = 'http://10.10.59.77:3000/api';// ip máy tính
 // const API_BASE_URL = 'http://localhost:3000/api';
@@ -162,7 +165,7 @@ async function sendCaptureCommand(deviceId = DEVICE_ID) {
     }
 }
 
-// ==================== STREAM API ====================
+// API Stream
 
 async function startStream(deviceId = DEVICE_ID) {
     try {
@@ -191,13 +194,13 @@ async function getStreamStatus(deviceId = DEVICE_ID) {
     }
 }
 
-// ==================== DISPLAY: LATEST FRAME (polling) ====================
+// Hiển  thị annhr
 
 // Cập nhật ảnh + kết quả nhận diện liên tục từ cache backend
 async function pollLatestFrame() {
     const result = await getLatestFrame();
 
-    const imgEl = document.getElementById('cam-feed');          // Cập nhật thẻ cam-feed thay vì cam-image
+    const imgEl = document.getElementById('cam-feed');
     const camStatus = document.getElementById('cam-status');
     const statusEl = document.getElementById('disease-status');
 
@@ -206,7 +209,9 @@ async function pollLatestFrame() {
         return;
     }
 
-    // Cập nhật ảnh base64 vào camera display nếu user đang chọn "Xem ảnh mới nhất"
+    // Chỉ cập nhật UI khi thực sự có dữ liệu mới
+    const isNewData = result.timestamp !== window._lastFrameTime;
+
     if (imgEl && result.image_base64) {
         if (window.currentCameraMode === 'image') {
             imgEl.src = 'data:image/jpeg;base64,' + result.image_base64;
@@ -215,24 +220,28 @@ async function pollLatestFrame() {
         }
     }
 
-    // Cập nhật kết quả nhận diện (sẽ kèm luôn ảnh vào AI section)
+    // Cập nhật kết quả nhận diện (luôn refresh để hiện thời gian mới nhất)
     if (statusEl) {
-        statusEl.innerHTML = buildPredictionCard(result);
+        statusEl.innerHTML = buildPredictionCard(result, isNewData);
     }
 
-    // Lưu timestamp để check mới
+    // Lưu timestamp của frame này
     window._lastFrameTime = result.timestamp;
 }
 
-function buildPredictionCard(data) {
+function buildPredictionCard(data, isNewData = false) {
     const time = data.timestamp ? new Date(data.timestamp).toLocaleString('vi-VN') : '--';
     const confidencePct = ((data.confidence || 0) * 100).toFixed(1);
     const colorClass = getDiseaseColor(data.disease);
 
-    const detectionsHtml = (data.predictions && data.predictions.length > 0)
-        ? data.predictions.map(p => `
+    // Lọc bỏ các nhãn có confidence = 0 (không phát hiện được)
+    const validPredictions = (data.predictions || []).filter(p => p.confidence > 0);
+    const detectionsHtml = validPredictions.length > 0
+        ? validPredictions
+            .sort((a, b) => b.confidence - a.confidence)
+            .map(p => `
             <div class="detection-item">
-                <span class="det-class">${getDiseaseName(p.class)}</span>
+                <span class="det-class">${getDiseaseName(p.label || p.class)}</span>
                 <span class="det-conf">${(p.confidence * 100).toFixed(1)}%</span>
             </div>`).join('')
         : '<div class="detection-item">Không phát hiện đối tượng</div>';
@@ -241,12 +250,20 @@ function buildPredictionCard(data) {
         ? `<img src="data:image/jpeg;base64,${data.image_base64}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;" alt="AI Detection Image"/>`
         : '';
 
+    // Badge cập nhật
+    const newBadge = isNewData
+        ? `<span class="new-badge">🔄 Vừa cập nhật</span>`
+        : '';
+
     return `
         <div class="prediction-card ${colorClass}">
             ${imageHtml}
             <div class="prediction-header">
                 <h3>${getDiseaseName(data.disease)}</h3>
-                <span class="timestamp">${time}</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    ${newBadge}
+                    <span class="timestamp">${time}</span>
+                </div>
             </div>
             <div class="confidence-bar">
                 <div class="confidence-fill" style="width:${confidencePct}%"></div>
@@ -258,7 +275,8 @@ function buildPredictionCard(data) {
     `;
 }
 
-// ==================== DISPLAY: HISTORY ====================
+
+// Hiển thị lịch sử
 
 async function displayLatestPrediction() {
     // Dùng pollLatestFrame thay — giữ hàm này để tương thích với prediction.js
@@ -315,7 +333,7 @@ async function displayStatistics() {
     `;
 }
 
-// ==================== HELPERS ====================
+// Heplers Thứ tự chuẩn đoán 
 
 function getDiseaseColor(disease) {
     return {
@@ -341,7 +359,7 @@ function getDiseaseName(disease) {
     }[disease] || disease;
 }
 
-// ==================== AUTO REFRESH ====================
+// Auto
 
 function startAutoRefresh() {
     // fetchSensorData();
