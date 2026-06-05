@@ -60,10 +60,10 @@
             <input id="threshhold-high" type="number" value="0" class="moisture" onchange="threshHoldHighChange()"
               style="width: 65px; margin-right: 5px;">%
           </div>
-          <div>
+          <!-- <div>
             <p>Trạng thái bơm</p>
             <div id="pump-state" class="moisture">---</div>
-          </div>
+          </div> -->
         </div>
 
         <!-- NHIỆT ĐỘ + ĐỘ ẨM KHÔNG KHÍ + ÁNH SÁNG -->
@@ -73,10 +73,48 @@
           <div>☀ <span id="light-1">--%</span></div>
         </div>
 
+
+      </div>
+    </div>
+    <!-- Điều khiển bơm -->
+    <div class="control-section light-card">
+      <div class="light-header">
+        <span class="light-icon">💧</span>
+        <h3>Điều khiển bơm</h3>
+      </div>
+
+      <div class="light-body">
+        <span id="pump-status" class="status-off"
+          style="width: 200px; height: 40px; display: flex; align-items: center; justify-content: center;">
+          Đang tắt
+        </span>
+
         <!-- SLIDER + THRESHOLD -->
 
         <button id="water-status" onclick="waterNow()">💧 Tưới ngay</button>
+        <button id="water-auto-mode" onclick="turnOnPumpAutoMode()">tự động</button>
+      </div>
+    </div>
 
+    <!-- Điều khiển đèn -->
+    <div class="control-section light-card">
+      <div class="light-header">
+        <span class="light-icon">💡</span>
+        <h3>Điều khiển đèn</h3>
+      </div>
+
+      <div class="light-body">
+        <span id="light-status" class="status-off"
+          style="width: 200px; height: 40px; display: flex; align-items: center; justify-content: center;">
+          Đang tắt
+        </span>
+
+        <button id="light-btn" class="light-btn" onclick="controlLight()">
+          Bật đèn
+        </button>
+        <button id="light-auto-mode" class="light-btn" onclick="turnOnLightAutoMode()">
+          tự động
+        </button>
       </div>
     </div>
 

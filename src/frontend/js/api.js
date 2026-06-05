@@ -3,8 +3,13 @@ const API_BASE_URL = window.location.origin.startsWith('http')
     ? window.location.origin + '/api'
     : 'http://localhost:3000/api';
 
-const SENSOR_REFRESH_INTERVAL = 10000;
-const FRAME_POLL_INTERVAL = 2000;
+const API_BASE_URL = 'http://10.10.59.77:3000/api';// ip máy tính
+// const API_BASE_URL = 'http://localhost:3000/api';
+
+const DEVICE_ID = 'ESP32-CAM-01';
+
+const SENSOR_REFRESH_INTERVAL = 10000;  // 10 giây
+const FRAME_POLL_INTERVAL = 2000;   // 2 giây — polling ảnh mới từ ESP32
 
 let refreshTimer = null;
 let frameTimer = null;
@@ -100,7 +105,7 @@ let frameTimer = null;
 // ==================== IMAGE API ====================
 
 // Lấy frame mới nhất (ảnh base64 + kết quả nhận diện)
-async function getLatestFrame(deviceId = 'ESP32-CAM-01') {
+async function getLatestFrame(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest-frame?deviceId=${deviceId}`);
         return await res.json();
@@ -110,7 +115,7 @@ async function getLatestFrame(deviceId = 'ESP32-CAM-01') {
 }
 
 // Lấy dự đoán gần nhất từ DB (dùng cho lịch sử)
-async function getLatestPrediction(deviceId = 'ESP32-CAM-01') {
+async function getLatestPrediction(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest?deviceId=${deviceId}`);
         return await res.json();
@@ -119,7 +124,7 @@ async function getLatestPrediction(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function getPredictionHistory(deviceId = 'ESP32-CAM-01', limit = 20) {
+async function getPredictionHistory(deviceId = DEVICE_ID, limit = 20) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/history?deviceId=${deviceId}&limit=${limit}`);
         return await res.json();
@@ -128,7 +133,7 @@ async function getPredictionHistory(deviceId = 'ESP32-CAM-01', limit = 20) {
     }
 }
 
-async function getStatistics(deviceId = 'ESP32-CAM-01', days = 7) {
+async function getStatistics(deviceId = DEVICE_ID, days = 7) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/statistics?deviceId=${deviceId}&days=${days}`);
         return await res.json();
@@ -146,8 +151,8 @@ async function getModelStatus() {
     }
 }
 
-// Gửi lệnh chụp ngay 
-async function sendCaptureCommand(deviceId = 'ESP32-CAM-01') {
+// Gửi lệnh chụp ngay — route: POST /api/image/capture/send
+async function sendCaptureCommand(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/capture/send?deviceId=${deviceId}`, {
             method: 'POST',
@@ -162,7 +167,7 @@ async function sendCaptureCommand(deviceId = 'ESP32-CAM-01') {
 
 // API Stream
 
-async function startStream(deviceId = 'ESP32-CAM-01') {
+async function startStream(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/start?deviceId=${deviceId}`, { method: 'POST' });
         return await res.json();
@@ -171,7 +176,7 @@ async function startStream(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function stopStream(deviceId = 'ESP32-CAM-01') {
+async function stopStream(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/stop?deviceId=${deviceId}`, { method: 'POST' });
         return await res.json();
@@ -180,7 +185,7 @@ async function stopStream(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function getStreamStatus(deviceId = 'ESP32-CAM-01') {
+async function getStreamStatus(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/status?deviceId=${deviceId}`);
         return await res.json();
