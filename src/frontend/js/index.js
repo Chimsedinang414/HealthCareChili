@@ -1,4 +1,4 @@
-const IP = "http://192.168.1.12";
+const IP = "http://10.10.59.13";
 
 //độ ẩm không khí
 async function getHumidity() {
@@ -474,7 +474,7 @@ async function viewCamera(mode) {
     document.getElementById("cam-status");
 
   const esp32CamIp =
-    "http://192.168.1.19";
+    "http://10.10.59.157";
 
   window.currentCameraMode = mode;
 

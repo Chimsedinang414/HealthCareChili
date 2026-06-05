@@ -1,6 +1,6 @@
 //config
 
-const API_BASE_URL = 'http://192.168.5.197:3000/api';// ip máy tính
+const API_BASE_URL = 'http://10.10.59.77:3000/api';// ip máy tính
 // const API_BASE_URL = 'http://localhost:3000/api';
 
 const DEVICE_ID = 'ESP32-CAM-01';
