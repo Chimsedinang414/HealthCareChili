@@ -910,6 +910,7 @@ button:hover {
   flex-direction: column;
   gap: 4px;
 }
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -940,6 +941,7 @@ button:hover {
 }
 
 @media (max-width: 768px) {
+
   .info-grid,
   .threshold-grid {
     grid-template-columns: 1fr;
@@ -952,4 +954,67 @@ button:hover {
   .camera-controls {
     flex-direction: column;
   }
+}
+
+.light-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.light-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.light-icon {
+  font-size: 28px;
+}
+
+.light-header h3 {
+  margin: 0;
+}
+
+.light-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+#light-status,
+#pump-status {
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 20px;
+}
+
+.status-on {
+  background: #fff3cd;
+  color: #d97706;
+}
+
+.status-off {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.light-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  background: #facc15;
+  color: #000;
+}
+
+.light-btn:hover {
+  transform: translateY(-2px);
 }

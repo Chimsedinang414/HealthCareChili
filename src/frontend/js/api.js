@@ -1,7 +1,9 @@
 //config
 
-// const API_BASE_URL = 'http://10.10.58.198:3000/api';// ip máy tính
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://192.168.5.197:3000/api';// ip máy tính
+// const API_BASE_URL = 'http://localhost:3000/api';
+
+const DEVICE_ID = 'ESP32-CAM-01';
 
 const SENSOR_REFRESH_INTERVAL = 10000;  // 10 giây
 const FRAME_POLL_INTERVAL = 2000;   // 2 giây — polling ảnh mới từ ESP32
@@ -11,96 +13,96 @@ let frameTimer = null;
 
 
 
-async function fetchSensorData() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/sensors`);
-        const result = await response.json();
-        if (result.success) {
-            displaySensorData(result.data);
-            displayAlerts(result.alerts);
-            updateConnectionStatus(true);
-        } else {
-            updateConnectionStatus(false);
-        }
-    } catch (error) {
-        console.error('fetchSensorData:', error);
-        updateConnectionStatus(false);
-    }
-}
+// async function fetchSensorData() {
+//     try {
+//         const response = await fetch(`${API_BASE_URL}/sensors`);
+//         const result = await response.json();
+//         if (result.success) {
+//             displaySensorData(result.data);
+//             displayAlerts(result.alerts);
+//             updateConnectionStatus(true);
+//         } else {
+//             updateConnectionStatus(false);
+//         }
+//     } catch (error) {
+//         console.error('fetchSensorData:', error);
+//         updateConnectionStatus(false);
+//     }
+// }
 
-function displaySensorData(data) {
-    if (!data) return;
-    document.getElementById('temperature').textContent = data.temperature || '--';
-    document.getElementById('humidity').textContent = data.humidity || '--';
-    document.getElementById('soil-moisture').textContent = data.soil_moisture || '--';
-    document.getElementById('light-level').textContent = data.light_level || '--';
+// function displaySensorData(data) {
+//     if (!data) return;
+//     document.getElementById('temperature').textContent = data.temperature || '--';
+//     document.getElementById('humidity').textContent = data.humidity || '--';
+//     document.getElementById('soil-moisture').textContent = data.soil_moisture || '--';
+//     document.getElementById('light-level').textContent = data.light_level || '--';
 
-    updateSensorStatus('temp', data.temperature, data.thresholds?.temperature_min, data.thresholds?.temperature_max);
-    updateSensorStatus('humidity', data.humidity, data.thresholds?.humidity_min, data.thresholds?.humidity_max);
-    updateSensorStatus('soil', data.soil_moisture, data.thresholds?.soil_moisture_min, data.thresholds?.soil_moisture_max);
-    updateSensorStatus('light', data.light_level, data.thresholds?.light_min, null);
+//     updateSensorStatus('temp', data.temperature, data.thresholds?.temperature_min, data.thresholds?.temperature_max);
+//     updateSensorStatus('humidity', data.humidity, data.thresholds?.humidity_min, data.thresholds?.humidity_max);
+//     updateSensorStatus('soil', data.soil_moisture, data.thresholds?.soil_moisture_min, data.thresholds?.soil_moisture_max);
+//     updateSensorStatus('light', data.light_level, data.thresholds?.light_min, null);
 
-    const safe = v => (v || '--');
-    document.getElementById('moisture-text-1').textContent = safe(data.soil_moisture) + '%';
-    document.getElementById('temp-1').textContent = safe(data.temperature) + '°C';
-    document.getElementById('light-1').textContent = safe(data.light_level) + '%';
-    document.getElementById('slider-1').value = data.soil_moisture || 0;
-}
+//     const safe = v => (v || '--');
+//     document.getElementById('moisture-text-1').textContent = safe(data.soil_moisture) + '%';
+//     document.getElementById('temp-1').textContent = safe(data.temperature) + '°C';
+//     document.getElementById('light-1').textContent = safe(data.light_level) + '%';
+//     document.getElementById('slider-1').value = data.soil_moisture || 0;
+// }
 
-function updateSensorStatus(sensor, value, min, max) {
-    const statusEl = document.getElementById(`${sensor}-status`);
-    const cardEl = document.getElementById(`sensor-${sensor}`);
-    if (!statusEl || !cardEl) return;
+// function updateSensorStatus(sensor, value, min, max) {
+//     const statusEl = document.getElementById(`${sensor}-status`);
+//     const cardEl = document.getElementById(`sensor-${sensor}`);
+//     if (!statusEl || !cardEl) return;
 
-    if (!value) {
-        statusEl.textContent = 'Chưa có dữ liệu';
-        statusEl.className = 'sensor-status unknown';
-        cardEl.className = 'sensor-card unknown';
-        return;
-    }
+//     if (!value) {
+//         statusEl.textContent = 'Chưa có dữ liệu';
+//         statusEl.className = 'sensor-status unknown';
+//         cardEl.className = 'sensor-card unknown';
+//         return;
+//     }
 
-    let status = 'normal', statusText = 'Bình thường';
-    if (min && value < min) { status = 'warning'; statusText = 'Thấp'; }
-    else if (max && value > max) { status = 'warning'; statusText = 'Cao'; }
+//     let status = 'normal', statusText = 'Bình thường';
+//     if (min && value < min) { status = 'warning'; statusText = 'Thấp'; }
+//     else if (max && value > max) { status = 'warning'; statusText = 'Cao'; }
 
-    statusEl.textContent = statusText;
-    statusEl.className = `sensor-status ${status}`;
-    cardEl.className = `sensor-card ${status}`;
-}
+//     statusEl.textContent = statusText;
+//     statusEl.className = `sensor-status ${status}`;
+//     cardEl.className = `sensor-card ${status}`;
+// }
 
-function displayAlerts(alerts) {
-    const section = document.getElementById('alerts-section');
-    const list = document.getElementById('alerts-list');
-    if (!section || !list) return;
+// function displayAlerts(alerts) {
+//     const section = document.getElementById('alerts-section');
+//     const list = document.getElementById('alerts-list');
+//     if (!section || !list) return;
 
-    if (!alerts || alerts.length === 0) { section.style.display = 'none'; return; }
+//     if (!alerts || alerts.length === 0) { section.style.display = 'none'; return; }
 
-    section.style.display = 'block';
-    list.innerHTML = alerts.map(a => `
-        <div class="alert alert-${a.type}">
-            <span class="alert-icon">${getAlertIcon(a.type)}</span>
-            <span class="alert-message">${a.message}</span>
-            <span class="alert-value">${a.value}${getAlertUnit(a.sensor)}</span>
-        </div>
-    `).join('');
-}
+//     section.style.display = 'block';
+//     list.innerHTML = alerts.map(a => `
+//         <div class="alert alert-${a.type}">
+//             <span class="alert-icon">${getAlertIcon(a.type)}</span>
+//             <span class="alert-message">${a.message}</span>
+//             <span class="alert-value">${a.value}${getAlertUnit(a.sensor)}</span>
+//         </div>
+//     `).join('');
+// }
 
-function getAlertIcon(type) { return { error: '🔴', warning: '🟡', info: '🔵' }[type] || '⚠️'; }
-function getAlertUnit(sensor) { return { temperature: '°C', humidity: '%', soil_moisture: '%', light_level: '%' }[sensor] || ''; }
+// function getAlertIcon(type) { return { error: '🔴', warning: '🟡', info: '🔵' }[type] || '⚠️'; }
+// function getAlertUnit(sensor) { return { temperature: '°C', humidity: '%', soil_moisture: '%', light_level: '%' }[sensor] || ''; }
 
-function updateConnectionStatus(connected) {
-    const el = document.getElementById('connection-status');
-    if (!el) return;
-    el.querySelector('.status-dot').className = `status-dot ${connected ? 'online' : 'offline'}`;
-    el.querySelector('.status-text').textContent = connected ? 'Online' : 'Offline';
-}
+// function updateConnectionStatus(connected) {
+//     const el = document.getElementById('connection-status');
+//     if (!el) return;
+//     el.querySelector('.status-dot').className = `status-dot ${connected ? 'online' : 'offline'}`;
+//     el.querySelector('.status-text').textContent = connected ? 'Online' : 'Offline';
+// }
 
 
 
 // ==================== IMAGE API ====================
 
 // Lấy frame mới nhất (ảnh base64 + kết quả nhận diện)
-async function getLatestFrame(deviceId = 'ESP32-CAM-01') {
+async function getLatestFrame(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest-frame?deviceId=${deviceId}`);
         return await res.json();
@@ -110,7 +112,7 @@ async function getLatestFrame(deviceId = 'ESP32-CAM-01') {
 }
 
 // Lấy dự đoán gần nhất từ DB (dùng cho lịch sử)
-async function getLatestPrediction(deviceId = 'ESP32-CAM-01') {
+async function getLatestPrediction(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest?deviceId=${deviceId}`);
         return await res.json();
@@ -119,7 +121,7 @@ async function getLatestPrediction(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function getPredictionHistory(deviceId = 'ESP32-CAM-01', limit = 20) {
+async function getPredictionHistory(deviceId = DEVICE_ID, limit = 20) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/history?deviceId=${deviceId}&limit=${limit}`);
         return await res.json();
@@ -128,7 +130,7 @@ async function getPredictionHistory(deviceId = 'ESP32-CAM-01', limit = 20) {
     }
 }
 
-async function getStatistics(deviceId = 'ESP32-CAM-01', days = 7) {
+async function getStatistics(deviceId = DEVICE_ID, days = 7) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/statistics?deviceId=${deviceId}&days=${days}`);
         return await res.json();
@@ -147,7 +149,7 @@ async function getModelStatus() {
 }
 
 // Gửi lệnh chụp ngay — route: POST /api/image/capture/send
-async function sendCaptureCommand(deviceId = 'ESP32-CAM-01') {
+async function sendCaptureCommand(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/capture/send?deviceId=${deviceId}`, {
             method: 'POST',
@@ -162,7 +164,7 @@ async function sendCaptureCommand(deviceId = 'ESP32-CAM-01') {
 
 // ==================== STREAM API ====================
 
-async function startStream(deviceId = 'ESP32-CAM-01') {
+async function startStream(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/start?deviceId=${deviceId}`, { method: 'POST' });
         return await res.json();
@@ -171,7 +173,7 @@ async function startStream(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function stopStream(deviceId = 'ESP32-CAM-01') {
+async function stopStream(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/stop?deviceId=${deviceId}`, { method: 'POST' });
         return await res.json();
@@ -180,7 +182,7 @@ async function stopStream(deviceId = 'ESP32-CAM-01') {
     }
 }
 
-async function getStreamStatus(deviceId = 'ESP32-CAM-01') {
+async function getStreamStatus(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/stream/status?deviceId=${deviceId}`);
         return await res.json();
@@ -342,9 +344,9 @@ function getDiseaseName(disease) {
 // ==================== AUTO REFRESH ====================
 
 function startAutoRefresh() {
-    fetchSensorData();
-    if (refreshTimer) clearInterval(refreshTimer);
-    refreshTimer = setInterval(fetchSensorData, SENSOR_REFRESH_INTERVAL);
+    // fetchSensorData();
+    // if (refreshTimer) clearInterval(refreshTimer);
+    // refreshTimer = setInterval(fetchSensorData, SENSOR_REFRESH_INTERVAL);
 
     // Polling ảnh mới nhất từ ESP32-CAM mỗi 2 giây
     pollLatestFrame();
