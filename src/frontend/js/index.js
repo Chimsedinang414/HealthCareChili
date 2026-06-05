@@ -1,4 +1,4 @@
-const IP = "http://10.10.58.127";
+// const IP = "http://10.10.59.214";
 
 //độ ẩm không khí
 async function getHumidity() {
@@ -103,14 +103,14 @@ function loadAllSensors() {
   getPumpState();
 }
 
-loadAllSensors();
-getThresholds();
+// loadAllSensors();
+// getThresholds();
 
-setInterval(loadAllSensors, 1000);
-setInterval(getThresholds, 10000);
+// setInterval(loadAllSensors, 1000);
+// setInterval(getThresholds, 10000);
 
-// // const IP = "http://192.168.10.10";
-// const IP = "http://172.20.10.4";
+// const IP = "http://192.168.10.10";
+// const IP = "http://10.10.59.214";
 // // const IP = "https://2514f12b-b0b5-4d1c-840e-41ae0567ff6e.mock.pstmn.io";
 
 // async function getSensorData() {
@@ -296,112 +296,7 @@ function updateMoisture(id, value) {
 function waterNow() {
   let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
 
-  //nếu on -> off
-  if (currentState === "on") {
-    controlPump("off");
-    // document.getElementById("water-status").innerText = "💧 Tưới ngay";
-  } else {
-    controlPump("on");
-    // document.getElementById("water-status").innerText = "💧 Dừng tưới";
-  }
-}
-
-function controlPump(state) {
-  fetch(`${IP}/control_pump`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "state=" + encodeURIComponent(state)
-  })
-    .then(res => res.json())
-    .then(data => {
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
-
-  console.log("Pump state changed to:", state);
-}
-
-// function controlPump(state) {
-
-//   fetch(`${IP}/control_pump?state=${state}`)
-//     .then(res => res.text())
-//     .then(data => {
-
-//       console.log("Pump:", data);
-
-//       // cập nhật trạng thái lên UI
-//       document.getElementById("pump-state").innerText =
-//         state.toUpperCase();
-
-//     })
-//     .catch(err => console.error("Pump Error:", err));
-// }
-//   updateMoisture(id, newValue);
-// }
-function threshHoldLowChange() {
-  let value = document.getElementById("threshold-low-input").value;
-  console.log("New threshold low", value);
-
-   fetch(`${IP}/set_Threshold_Low_Default`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "value=" + encodeURIComponent(value)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert("Server response: " + JSON.stringify(data));
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
-}
-
-function threshHoldHighChange() {
-  let value = document.getElementById("threshhold-high").value;
-  console.log("New threshold high:", value);
-
-  fetch(`${IP}/set_Threshold_High_Default`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "value=" + encodeURIComponent(value)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert("Server response: " + JSON.stringify(data));
-      console.log(data);
-    })
-    .catch(err => console.error("Error:", err));
-}
-
-
-// MOISTURE
-function updateMoisture(id, value) {
-  let text = document.getElementById(`moisture-text-${id}`);
-
-  let status = "Tốt";
-  let color = "green";
-
-  if (value < 30) {
-    status = "Khô";
-    color = "red";
-  } else if (value < 60) {
-    status = "Cần tưới";
-    color = "orange";
-  }
-
-  text.innerText = value + "% - " + status;
-  text.style.color = color;
-}
-
-function waterNow() {
-  let currentState = document.getElementById("pump-state").innerText.trim().toLowerCase();
-
-  //nếu on -> off
+  // nếu on -> off
   if (currentState === "on") {
     controlPump("off");
     document.getElementById("water-status").innerText = "💧 Tưới ngay";
@@ -433,9 +328,8 @@ async function viewCamera(mode) {
   const camFeed = document.getElementById('cam-feed');
   const camStatus = document.getElementById('cam-status');
 
-  // ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL 
-  const esp32CamIp = "http://192.168.1.19";
-  // const esp32CamIp = "http://10.10.58.207";
+  // ĐỊA CHỈ IP TĨNH CỦA ESP32-CAM TRONG MẠNG LOCAL (được dùng làm fallback)
+  const esp32CamIp = "http://192.168.1.30";
 
   window.currentCameraMode = mode;
 
@@ -456,14 +350,20 @@ async function viewCamera(mode) {
     camFeed.src = '';
 
     // Gọi API báo cho backend bật stream
-    if (typeof startStream === 'function') await startStream();
+    let streamUrl = `${esp32CamIp}:81/stream`; // fallback mặc định
+    if (typeof startStream === 'function') {
+      const result = await startStream();
+      if (result && result.success && result.streamUrl) {
+        streamUrl = result.streamUrl;
+      }
+    }
 
     // Đợi 5 giây để ESP32-CAM kịp nhận lệnh và khởi động WebServer
     setTimeout(() => {
       if (window.currentCameraMode !== 'stream') return;
       camStatus.style.display = 'none';
       camFeed.style.display = 'block';
-      camFeed.src = `${esp32CamIp}:81/stream`;
+      camFeed.src = streamUrl;
     }, 5000);
   }
   else if (mode === 'stop') {
@@ -601,74 +501,4 @@ async function viewCamera(mode) {
 //     .catch(err => console.error(err));
 // }
 
-// // ================= CAMERA =================
-
-// async function viewCamera(mode) {
-
-//   const camFeed =
-//     document.getElementById("cam-feed");
-
-//   const camStatus =
-//     document.getElementById("cam-status");
-
-//   const esp32CamIp =
-//     "http://192.168.1.19";
-
-//   window.currentCameraMode = mode;
-
-//   if (mode === "image") {
-
-//     camStatus.style.display = "block";
-//     camStatus.innerText =
-//       "Đang gửi lệnh chụp ảnh...";
-
-//     camFeed.style.display = "none";
-//     camFeed.src = "";
-
-//     if (typeof stopStream === "function")
-//       await stopStream();
-
-//     if (typeof sendCaptureCommand === "function")
-//       await sendCaptureCommand();
-
-//   }
-//   else if (mode === "stream") {
-
-//     camStatus.style.display = "block";
-//     camStatus.innerText =
-//       "Đang khởi động Stream...";
-
-//     camFeed.style.display = "none";
-//     camFeed.src = "";
-
-//     if (typeof startStream === "function")
-//       await startStream();
-
-//     setTimeout(() => {
-
-//       if (
-//         window.currentCameraMode !==
-//         "stream"
-//       ) return;
-
-//       camStatus.style.display = "none";
-//       camFeed.style.display = "block";
-
-//       camFeed.src =
-//         `${esp32CamIp}:81/stream`;
-
-//     }, 5000);
-//   }
-//   else if (mode === "stop") {
-
-//     if (typeof stopStream === "function")
-//       await stopStream();
-
-//     camFeed.style.display = "none";
-//     camFeed.src = "";
-
-//     camStatus.style.display = "block";
-//     camStatus.innerText =
-//       "Đã tắt Camera";
-//   }
-// }
+// Nút camera đã được định nghĩa và đồng bộ qua index.js mới ở trên

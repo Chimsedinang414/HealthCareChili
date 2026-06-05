@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Script nhận diện bệnh ớt sử dụng YOLO (best.pt)
-Cập nhật: Thêm chức năng báo "Unknown" khi độ tự tin thấp hoặc gặp vật thể lạ.
-"""
-
 import sys
 import json
 import time
@@ -13,18 +7,15 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-# ─── Cấu hình ngưỡng ──────────────────────────────────────────────────────────
-# Nếu AI đoán với độ tin cậy thấp hơn mức này, nó sẽ báo là Unknown.
-# Bạn có thể điều chỉnh từ 0.5 đến 0.7 tùy vào độ khắt khe mong muốn.
-CONF_THRESHOLD = 0.6 
 
-# ─── Đường dẫn model ──────────────────────────────────────────────────────────
+CONF_THRESHOLD = 0.35
+
+
 _ROOT = Path(__file__).parent.parent
 MODEL_PATH = _ROOT / 'best.pt'
 if not MODEL_PATH.exists():
     MODEL_PATH = _ROOT / 'plant_health_model.pt'
 
-# ─── Mapping nhãn ────────────────────────────────────────────────────────────
 LABELS = {
     0: 'chili_leaf_curl_virus',
     1: 'chili_veino_mottle_virus',
