@@ -1,10 +1,8 @@
-//config
-// const API_BASE_URL = window.location.origin.startsWith('http')
-//     ? window.location.origin + '/api'
-//     : 'http://localhost:3000/api';
 
-const API_BASE_URL = 'http://10.10.59.77:3000/api';// ip máy tính
-// const API_BASE_URL = 'http://localhost:3000/api';
+// Tự động lấy IP/port từ URL hiện tại
+const API_BASE_URL = window.location.origin.startsWith('http')
+    ? window.location.origin + '/api'
+    : 'http://localhost:3000/api';
 
 const DEVICE_ID = 'ESP32-CAM-01';
 
@@ -102,9 +100,9 @@ let frameTimer = null;
 
 
 
-// ==================== IMAGE API ====================
+// IMG API
 
-// Lấy frame mới nhất (ảnh base64 + kết quả nhận diện)
+// Lấy frame mới nhất 
 async function getLatestFrame(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest-frame?deviceId=${deviceId}`);
@@ -114,7 +112,7 @@ async function getLatestFrame(deviceId = DEVICE_ID) {
     }
 }
 
-// Lấy dự đoán gần nhất từ DB (dùng cho lịch sử)
+// Lấy dự đoán gần nhất từ DB 
 async function getLatestPrediction(deviceId = DEVICE_ID) {
     try {
         const res = await fetch(`${API_BASE_URL}/image/latest?deviceId=${deviceId}`);

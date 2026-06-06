@@ -479,9 +479,6 @@ async function viewCamera(mode) {
   const camStatus =
     document.getElementById("cam-status");
 
-  const esp32CamIp =
-    "http://10.10.59.157";
-
   window.currentCameraMode = mode;
 
   if (mode === "image") {
@@ -499,6 +496,50 @@ async function viewCamera(mode) {
     if (typeof sendCaptureCommand === "function")
       await sendCaptureCommand();
 
+    // Poll ảnh mới nhất sau khi gửi lệnh chụp (đợi ESP32 xử lý)
+    camStatus.innerText = "Đang chờ ảnh từ ESP32-CAM...";
+    
+    // Lưu timestamp trước khi chụp để so sánh
+    const beforeCaptureTime = window._lastFrameTime || null;
+    
+    let attempts = 0;
+    const maxAttempts = 6;
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      try {
+        const result = await getLatestFrame();
+        if (result && result.success && result.hasData && result.image_base64) {
+          // Kiểm tra xem ảnh mới hơn ảnh trước khi chụp
+          const isNewResult = !beforeCaptureTime || result.timestamp !== beforeCaptureTime;
+          
+          if (isNewResult) {
+            clearInterval(pollInterval);
+            
+            // Hiển thị ảnh lên camera feed
+            camFeed.src = 'data:image/jpeg;base64,' + result.image_base64;
+            camFeed.style.display = "block";
+            camStatus.style.display = "none";
+            window._lastFrameTime = result.timestamp;
+            
+            //  Hiện popup thông báo bệnh cây
+            showDiseasePopup(result);
+            
+            //  Tự động cập nhật lịch sử 
+            if (typeof displayPredictionHistory === "function") {
+              displayPredictionHistory();
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Poll frame error:", e);
+      }
+      
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        camStatus.innerText = "Không nhận được ảnh mới. Thử lại sau.";
+      }
+    }, 5000);
   }
   else if (mode === "stream") {
 
@@ -509,8 +550,31 @@ async function viewCamera(mode) {
     camFeed.style.display = "none";
     camFeed.src = "";
 
-    if (typeof startStream === "function")
-      await startStream();
+    // Gọi backend để bắt đầu stream, lấy streamUrl thực từ response
+    let streamUrl = null;
+    if (typeof startStream === "function") {
+      const result = await startStream();
+      if (result && result.success && result.streamUrl) {
+        streamUrl = result.streamUrl;
+      }
+    }
+
+    // Fallback: nếu backend không trả streamUrl lấy từ stream status
+    if (!streamUrl) {
+      try {
+        const status = await getStreamStatus();
+        if (status && status.streamUrl) {
+          streamUrl = status.streamUrl;
+        }
+      } catch (e) {
+        console.error("Stream status error:", e);
+      }
+    }
+
+    if (!streamUrl) {
+      camStatus.innerText = "Không lấy được URL stream từ server.";
+      return;
+    }
 
     setTimeout(() => {
 
@@ -522,8 +586,7 @@ async function viewCamera(mode) {
       camStatus.style.display = "none";
       camFeed.style.display = "block";
 
-      camFeed.src =
-        `${esp32CamIp}:81/stream`;
+      camFeed.src = streamUrl;
 
     }, 5000);
   }
@@ -540,3 +603,131 @@ async function viewCamera(mode) {
       "Đã tắt Camera";
   }
 }
+
+// POPup
+
+// Danh sách các bệnh thực sự của cây 
+const KNOWN_DISEASES = [
+  'chili_wilted', 'chili_whitefly', 'chili_yellowish',
+  'chili_leaf_curl_virus', 'chili_veino_mottle_virus'
+];
+
+function getPopupTheme(disease) {
+  if (disease === 'health_chili') {
+    return {
+      type: 'success',
+      title: 'Cây khỏe mạnh!',
+      subtitle: 'Không phát hiện dấu hiệu bệnh',
+      color: '#22c55e',
+      bgLight: '#f0fdf4',
+      iconSvg: '<svg viewBox="0 0 52 52" class="popup-svg-icon"><circle cx="26" cy="26" r="25" fill="none" stroke="#22c55e" stroke-width="2"/><path fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>'
+    };
+  }
+
+  if (KNOWN_DISEASES.includes(disease)) {
+    return {
+      type: 'warning',
+      title: 'Phát hiện bệnh!',
+      subtitle: 'Cây có dấu hiệu bất thường',
+      color: '#ef4444',
+      bgLight: '#fef2f2',
+      iconSvg: '<svg viewBox="0 0 52 52" class="popup-svg-icon"><circle cx="26" cy="26" r="25" fill="none" stroke="#ef4444" stroke-width="2"/><line x1="26" y1="15" x2="26" y2="30" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/><circle cx="26" cy="37" r="2" fill="#ef4444"/></svg>'
+    };
+  }
+
+  // Unknown, vật thể, người, hoặc không xác định
+  return {
+    type: 'info',
+    title: 'Kết quả phân tích',
+    subtitle: 'Đối tượng không thuộc danh mục bệnh cây',
+    color: '#6366f1',
+    bgLight: '#eef2ff',
+    iconSvg: '<svg viewBox="0 0 52 52" class="popup-svg-icon"><circle cx="26" cy="26" r="25" fill="none" stroke="#6366f1" stroke-width="2"/><circle cx="26" cy="17" r="2" fill="#6366f1"/><line x1="26" y1="23" x2="26" y2="38" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/></svg>'
+  };
+}
+
+function showDiseasePopup(data) {
+  closeDiseasePopup();
+
+  const diseaseName = typeof getDiseaseName === "function"
+    ? getDiseaseName(data.disease)
+    : data.disease;
+
+  const confidencePct = ((data.confidence || 0) * 100).toFixed(1);
+  const time = data.timestamp ? new Date(data.timestamp).toLocaleString('vi-VN') : '';
+  const theme = getPopupTheme(data.disease);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'disease-popup-overlay';
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeDiseasePopup();
+  });
+
+  overlay.innerHTML = `
+    <div class="dp-card">
+      <div class="dp-timer" style="background: ${theme.color};"></div>
+
+      <button class="dp-close" onclick="closeDiseasePopup()" aria-label="Đóng">&times;</button>
+
+      <div class="dp-icon-wrap">
+        ${theme.iconSvg}
+      </div>
+
+      <h2 class="dp-title">${theme.title}</h2>
+      <p class="dp-subtitle">${theme.subtitle}</p>
+
+      <div class="dp-badge" style="background: ${theme.bgLight}; color: ${theme.color};">
+        ${diseaseName}
+      </div>
+
+      <div class="dp-confidence">
+        <div class="dp-conf-row">
+          <span class="dp-conf-label">Độ tin cậy</span>
+          <span class="dp-conf-value" style="color: ${theme.color};">${confidencePct}%</span>
+        </div>
+        <div class="dp-conf-track">
+          <div class="dp-conf-fill" style="width: ${confidencePct}%; background: ${theme.color};"></div>
+        </div>
+      </div>
+
+      ${data.image_base64 ? `
+        <div class="dp-img-wrap">
+          <img src="data:image/jpeg;base64,${data.image_base64}" class="dp-img" alt="Ảnh nhận diện">
+        </div>
+      ` : ''}
+
+      ${data.alertMessage ? `
+        <div class="dp-alert" style="background: ${theme.bgLight}; border-left-color: ${theme.color};">
+          ${data.alertMessage}
+        </div>
+      ` : ''}
+
+      <div class="dp-footer">
+        <span class="dp-time">${time}</span>
+        <button class="dp-btn" style="background: ${theme.color};" onclick="closeDiseasePopup()">
+          OK
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+  });
+
+  const autoCloseTimer = setTimeout(() => closeDiseasePopup(), 15000);
+  overlay._autoCloseTimer = autoCloseTimer;
+}
+
+function closeDiseasePopup() {
+  const overlay = document.getElementById('disease-popup-overlay');
+  if (overlay) {
+    if (overlay._autoCloseTimer) clearTimeout(overlay._autoCloseTimer);
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.remove(), 300);
+  }
+}
+
+

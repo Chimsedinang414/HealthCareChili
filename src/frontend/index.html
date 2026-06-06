@@ -6,13 +6,9 @@
   <title>HealthCareTree - Smart Garden</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- <link rel="stylesheet" href="index.css"> -->
   <link rel="stylesheet" href="./css/style.css">
 
   <!-- Chart.js -->
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -128,7 +124,7 @@
     </div>
 
     <div class="alerts-section" id="alerts-section" style="display: none;">
-      <h2>⚠️ Cảnh báo</h2>
+      <h2> Cảnh báo</h2>
       <div class="alerts-list" id="alerts-list"></div>
     </div>
 
@@ -136,9 +132,9 @@
       <h2 style="height: 50px">📷 ESP32-CAM: Giám sát trực tiếp</h2>
 
       <div class="camera-controls">
-        <button class="btn-cam" onclick="viewCamera('image')">🖼️ Xem ảnh mới nhất</button>
-        <button class="btn-cam" onclick="viewCamera('stream')">🎥 Video trực tiếp</button>
-        <button class="btn-cam btn-stop" onclick="viewCamera('stop')">⏹️ Tắt Camera</button>
+        <button class="btn-cam" onclick="viewCamera('image')">Xem ảnh mới nhất</button>
+        <button class="btn-cam" onclick="viewCamera('stream')"> Video trực tiếp</button>
+        <button class="btn-cam btn-stop" onclick="viewCamera('stop')"> Tắt Camera</button>
       </div>
       <div class="camera-display">
         <span id="cam-status">Hãy chọn chế độ xem để kết nối với ESP32-CAM</span>
@@ -146,18 +142,10 @@
       </div>
     </div>
 
-    <div class="disease-section" style="display: none;">
-      <div class="disease-header">
-        <h2> Nhận diện bệnh cây (AI)</h2>
-        <button id="capture-now-btn" class="btn-capture-now" onclick="triggerCaptureNow()">📸 Chụp ngay</button>
-      </div>
-      <div id="disease-status" class="prediction-container">
-        <p>Đang tải dữ liệu...</p>
-      </div>
-    </div>
+    
 
     <div class="prediction-history-section">
-      <h2>📋 Lịch sử dự đoán</h2>
+      <h2> Lịch sử dự đoán</h2>
       <div id="history-list" class="history-container">
         <p>Đang tải...</p>
       </div>
