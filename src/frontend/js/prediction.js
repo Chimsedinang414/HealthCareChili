@@ -8,19 +8,19 @@ async function triggerCaptureNow() {
         const result = await sendCaptureCommand();
 
         if (result.success) {
-            showNotification('📸 Lệnh chụp đã gửi! ESP32 sẽ chụp trong vài giây', 'success');
+            showNotification(' Lệnh chụp đã gửi! ESP32 sẽ chụp trong vài giây', 'success');
 
             // Sau 6 giây tự bật lại nút (ảnh sẽ hiện tự động qua polling)
             setTimeout(() => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '📸 Chụp ngay'; }
+                if (btn) { btn.disabled = false; btn.innerHTML = ' Chụp ngay'; }
             }, 6000);
         } else {
             showNotification('❌ Gửi lệnh thất bại: ' + (result.error || 'Unknown error'), 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = '📸 Chụp ngay'; }
+            if (btn) { btn.disabled = false; btn.innerHTML = ' Chụp ngay'; }
         }
     } catch (error) {
         showNotification('❌ Lỗi: ' + error.message, 'error');
-        if (btn) { btn.disabled = false; btn.innerHTML = '📸 Chụp ngay'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = ' Chụp ngay'; }
     }
 }
 
@@ -46,9 +46,9 @@ async function toggleStream() {
                 imgEl.style.display = 'block';
             }
             if (streamBox) streamBox.style.display = 'block';
-            showNotification('🎥 Đang stream từ ESP32-CAM', 'success');
+            showNotification(' Đang stream từ ESP32-CAM', 'success');
         } else {
-            showNotification('❌ Không thể bật stream: ' + (result.error || ''), 'error');
+            showNotification(' Không thể bật stream: ' + (result.error || ''), 'error');
         }
     } else {
         // Tắt stream

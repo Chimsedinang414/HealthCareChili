@@ -126,7 +126,7 @@ exports.sendCaptureCommand = async (req, res) => {
   }
 };
 
-// ESP32 → hỏi có lệnh chụp không
+//
 exports.checkCaptureCommand = async (req, res) => {
   try {
     const deviceId = req.query.deviceId || 'ESP32-CAM-01';
@@ -156,7 +156,6 @@ exports.clearCaptureCommand = async (req, res) => {
 
 // ─── STREAM MAN
 
-// Web -> bật stream
 exports.startStream =
 async (req,res)=>{
 
