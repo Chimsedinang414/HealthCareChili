@@ -9,7 +9,7 @@ const API_BASE_URL = 'http://10.10.59.77:3000/api';// ip máy tính
 const DEVICE_ID = 'ESP32-CAM-01';
 
 const SENSOR_REFRESH_INTERVAL = 10000;  // 10 giây
-const FRAME_POLL_INTERVAL = 2000;   // 2 giây — polling ảnh mới từ ESP32
+const FRAME_POLL_INTERVAL = 180000;   // 3 phút — polling ảnh mới từ ESP32
 
 let refreshTimer = null;
 let frameTimer = null;
@@ -213,7 +213,7 @@ async function pollLatestFrame() {
     const isNewData = result.timestamp !== window._lastFrameTime;
 
     if (imgEl && result.image_base64) {
-        if (window.currentCameraMode === 'image') {
+        if (window.currentCameraMode === 'image' || !window.currentCameraMode) {
             imgEl.src = 'data:image/jpeg;base64,' + result.image_base64;
             imgEl.style.display = 'block';
             if (camStatus) camStatus.style.display = 'none';
@@ -227,6 +227,10 @@ async function pollLatestFrame() {
 
     // Lưu timestamp của frame này
     window._lastFrameTime = result.timestamp;
+}
+
+function backToLiveCamera() {
+    window.currentCameraMode = 'image';
 }
 
 function buildPredictionCard(data, isNewData = false) {
@@ -295,9 +299,28 @@ async function displayPredictionHistory() {
 
     const baseUrl = API_BASE_URL.replace(/\/api$/, '');
 
+    // el.innerHTML = result.predictions.slice(0, 10).map(pred => `
+    //     <div class="history-item ${getDiseaseColor(pred.disease)}">
+    //         ${pred.imageUrl ? `<img src="${baseUrl}${pred.imageUrl}" alt="Lịch sử chụp" class="history-img" loading="lazy">` : ''}
+    //         <div class="history-info">
+    //             <div class="history-disease">${getDiseaseName(pred.disease)}</div>
+    //             <div class="history-confidence">${(pred.confidence * 100).toFixed(1)}%</div>
+    //             <div class="history-time">${new Date(pred.timestamp).toLocaleString('vi-VN')}</div>
+    //         </div>
+    //     </div>
+    // `).join('');
     el.innerHTML = result.predictions.slice(0, 10).map(pred => `
-        <div class="history-item ${getDiseaseColor(pred.disease)}">
-            ${pred.imageUrl ? `<img src="${baseUrl}${pred.imageUrl}" alt="Lịch sử chụp" class="history-img" loading="lazy">` : ''}
+        <div class="history-item ${getDiseaseColor(pred.disease)}"
+            data-image="${pred.imageUrl ? baseUrl + pred.imageUrl : ''}">
+            
+            ${pred.imageUrl
+                ? `<img src="${baseUrl}${pred.imageUrl}" 
+                        alt="Lịch sử chụp"
+                        class="history-img"
+                        loading="lazy">`
+                : ''
+            }
+
             <div class="history-info">
                 <div class="history-disease">${getDiseaseName(pred.disease)}</div>
                 <div class="history-confidence">${(pred.confidence * 100).toFixed(1)}%</div>
@@ -305,6 +328,29 @@ async function displayPredictionHistory() {
             </div>
         </div>
     `).join('');
+
+
+    // Click ảnh lịch sử => hiện lên camera giám sát
+    document.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const imageUrl = item.dataset.image;
+            if (!imageUrl) return;
+
+            const camFeed = document.getElementById('cam-feed');
+            const camStatus = document.getElementById('cam-status');
+
+            if (camFeed) {
+                camFeed.src = imageUrl;
+
+                // Ngăn polling tự ghi đè ảnh vừa chọn
+                window.currentCameraMode = 'history';
+            }
+
+            if (camStatus) {
+                camStatus.textContent = 'Đang xem ảnh từ lịch sử dự đoán';
+            }
+        });
+    });
 }
 
 async function displayStatistics() {
